@@ -24,7 +24,7 @@ Two datasets used in this project are copied from their original website and are
 `CMAKE>=3.13` (I used `3.16.3`)
 
 ## How to run
-- `cmake -S . -B build`
+- `cmake -S . -B build -DCMAKE_PREFIX_PATH=libs/seal`
 - `cmake --build build`
 - Run the compiled binary, for example `./build/MyPocketNN`
 

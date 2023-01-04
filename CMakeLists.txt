@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.13)
 
 set(PROJECT_NAME
     MyPocketNN
@@ -20,7 +20,11 @@ set(LIBRARIES
 
 project(${PROJECT_NAME})
 
+find_package(SEAL 4.0 REQUIRED)
+
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE})
+
+target_link_libraries(${PROJECT_NAME} SEAL::seal)
 
 foreach(LIBRARY ${LIBRARIES})
     add_subdirectory("${LIBRARIES_DIR}/${LIBRARY}")

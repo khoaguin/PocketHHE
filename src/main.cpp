@@ -1,4 +1,5 @@
 #include "pktnn_examples.h"
+#include <seal/seal.h>
 
 int main() {
     // fc_int_bp_simple();  // simple training with dummy data using backpropagation
