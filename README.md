@@ -1,4 +1,4 @@
-# PocketNN
+# PocketHHE 
 Privacy-preserving Machine Learning (PocketNN on MNIST) with hybrid homomorphic encryption.
 ## Datasets
 Two datasets used in this project are copied from their original website and are stored in `data/`
