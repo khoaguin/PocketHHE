@@ -1,6 +1,8 @@
 #include "pktnn_examples.h"
 
 int fc_int_bp_simple() {
+    print_example_banner("PocketNN: Simple training with dummy data using backpropagation");
+
     // constructing the neural net
     const int dim1 = 3;
     const int dim2 = 5;
@@ -56,6 +58,8 @@ int fc_int_bp_simple() {
 };
 
 int fc_int_dfa_mnist() {
+    print_example_banner("PocketNN: Training on MNIST using direct feedback alignment");
+
     // Loading the MNIST dataset
     std::cout << "----- Loading MNIST data ----- \n";
     int numTrainSamples = 60000;
@@ -232,6 +236,7 @@ int fc_int_dfa_mnist() {
 };
 
 int fc_int_dfa_mnist_inference() {
+    print_example_banner("PocketNN: Inference on MNIST using pretrained weights");
     std::cout << "----- Constructing the network -----\n";
     int numClasses = 10;
     int mnistRows = 28;
@@ -248,6 +253,7 @@ int fc_int_dfa_mnist_inference() {
     fc1.useDfa(true).setActv(a).setNextLayer(fc2);
     fc2.useDfa(true).setActv(a).setNextLayer(fcLast);
     fcLast.useDfa(true).setActv(a);
+    std::cout << "Constructing a 3-layer fully connected neural network done!\n";
 
     std::cout << "----- Loading the MNIST test data -----\n";
     int numTestSamples = 10000;
