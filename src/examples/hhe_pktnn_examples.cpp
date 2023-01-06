@@ -12,12 +12,13 @@ struct Analyst {
 };
 
 
-int hhe_pktnn() {
+int hhe_pktnn_mnist_inference() {
     utils::print_example_banner("HHE with PocketNN");
 
     Analyst analyst;
 
     utils::print_line(__LINE__);
+    std::cout << "----- Analyst -----" << "\n";
     std::cout << "Analyst constructs the HE context" << "\n";
     std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context();
     sealhelper::print_parameters(*context);
@@ -31,9 +32,14 @@ int hhe_pktnn() {
     seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
     seal::Evaluator analyst_he_eval(*context);
     bool use_bsgs = false;
-    // std::vector<int> gk_indices = add_gk_indices(use_bsgs, analyst_he_benc);
-    // keygen.create_galois_keys(gk_indices, Analyst.he_gk);
+    std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
+    keygen.create_galois_keys(gk_indices, analyst.he_gk);
     utils::print_line(__LINE__);
-    
+    std::cout << "Analyst loads the weights and biases" << "\n";
+    pktnn::pktfc fc1(config::dim_input, config::num_classes);
+    fc1.loadWeight("weights/1_layer/fc1_weight.csv");
+    fc1.loadBias("weights/1_layer/fc1_bias.csv");
+    fc1.printWeight();
+
     return 0;
 }

@@ -8,7 +8,18 @@ namespace config
     extern uint64_t mod_degree;
     extern int seclevel;
     extern bool use_bsgs;  // used when creating the galois key
-    // // Parameters for experimentations
+    // MNIST parameters
+    extern int num_classes;
+    extern int mnist_rows;
+    extern int mnist_cols;
+    // Neural network parameters
+    extern int dim_input;
+    extern int dim_layer1;
+    extern int dim_layer2;
+    extern int epoch;
+    extern int mini_batch_size; // CAUTION: Too big minibatch size can cause overflow
+    extern int lr_inv;
+    // Parameters to run experiments
     // extern uint64_t NUM_RUN;  // Number of runs to average over and get the final experimental results
     // extern uint64_t NUM_VEC;  // Number of vectors that the user has
     // extern bool USE_BATCH;
