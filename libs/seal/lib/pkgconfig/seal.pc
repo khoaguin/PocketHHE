@@ -1,0 +1,18 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+prefix=/home/dk/Desktop/projects/PocketHHE/libs/seal
+libdir=${prefix}/lib
+includedir=${prefix}/include/SEAL-4.0
+
+Name: Microsoft SEAL
+Version: 4.0.0
+Description: An easy-to-use homomorphic encryption library
+
+Requires: 
+Requires: 
+Requires: 
+Requires: 
+
+Libs: -L${libdir} -lseal-4.0
+Cflags: -std=c++17 -I${includedir}
