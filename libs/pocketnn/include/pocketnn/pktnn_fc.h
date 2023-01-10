@@ -64,6 +64,7 @@ namespace pktnn {
         pktmat& getOutputForFc();
         pktmat3d& getOutputForConv();
         pktmat& getWeight();
+        pktmat& getBias();
         pktmat& getDeltasTranspose();
 
         // setters

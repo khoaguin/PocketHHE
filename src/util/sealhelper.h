@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <iostream>
 #include <seal/seal.h>
+#include <pocketnn/pktnn.h>
 
 namespace sealhelper {
     /*
@@ -14,4 +15,12 @@ namespace sealhelper {
     Helper function: Prints the parameters in a SEALContext.
     */
     void print_parameters(const seal::SEALContext &context);
+
+    /*
+        Helper function: Encrypts a matrix using SEAL.
+    */
+    seal::Ciphertext encrypting(const std::vector<int64_t> &input, 
+                                const seal::PublicKey &he_pk, 
+                                const seal::BatchEncoder &benc, 
+                                const seal::Encryptor &enc);
 }

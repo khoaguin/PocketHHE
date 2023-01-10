@@ -807,7 +807,6 @@ void pktmat::saveToCSV(std::string filename) {
     }
 }
 
-
 pktmat& pktmat::readFromCSV(std::string filename) {
     std::ifstream inFile(filename);
     std::string line;

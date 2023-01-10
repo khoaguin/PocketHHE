@@ -88,4 +88,17 @@ namespace sealhelper {
 
         std::cout << "\\" << std::endl;
     }
+
+    seal::Ciphertext encrypting(const std::vector<int64_t> &input, 
+                                const seal::PublicKey &he_pk, 
+                                const seal::BatchEncoder &benc, 
+                                const seal::Encryptor &enc)
+    {
+        // encode and encrypt the input
+        seal::Plaintext plain_input;
+        benc.encode(input, plain_input);
+        seal::Ciphertext encrypted_input;
+        // enc.encrypt(plain_input, encrypted_input);
+        return encrypted_input;
+    }
 }
