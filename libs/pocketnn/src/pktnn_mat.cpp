@@ -357,6 +357,15 @@ int pktnn::pktmat::getMaxIndexInRow(int r) const {
     return result;
 }
 
+std::vector<int64_t> pktnn::pktmat::getRow(int r) const {
+    assert(r >= 0 && r < mRows);
+    std::vector<int64_t> row;
+    for (int c = 0; c < mCols; ++c) {
+        row.push_back(mMat[r][c]);
+    }
+    return row;
+}
+
 pktmat& pktmat::setMat(int r, int c, int* m) {
     resetZero(r, c);
     for (int i = 0; i < mRows; ++i) {
@@ -430,6 +439,11 @@ pktmat& pktmat::printMat(std::ostream& outTo) {
         outTo << "\n";
     }
 
+    return *this;
+}
+
+pktmat& pktmat::printShape(std::ostream& outTo) {
+    outTo << "(" << mRows << ", " << mCols << ")\n";
     return *this;
 }
 

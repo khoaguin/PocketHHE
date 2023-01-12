@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <typeinfo>
 #include <seal/seal.h>
 #include <pocketnn/pktnn.h>
 
@@ -17,10 +18,18 @@ namespace sealhelper {
     void print_parameters(const seal::SEALContext &context);
 
     /*
-        Helper function: Encrypts a matrix using SEAL.
+    Helper function: Encrypts the weight matrix into a vector of ciphertexts of its column vectors.
     */
-    seal::Ciphertext encrypting(const std::vector<int64_t> &input, 
-                                const seal::PublicKey &he_pk, 
-                                const seal::BatchEncoder &benc, 
-                                const seal::Encryptor &enc);
+    std::vector<seal::Ciphertext> encrypt_weight(pktnn::pktmat &mat, 
+                                    const seal::PublicKey &he_pk, 
+                                    const seal::BatchEncoder &benc, 
+                                    const seal::Encryptor &enc);
+    /* 
+    Helper function: Decrypt the encrypted weight into a matrix of plaintexts.
+    */
+    pktnn::pktmat decrypt_weight(std::vector<seal::Ciphertext> &enc_weight,
+                                    const seal::SecretKey &he_sk,
+                                    const seal::BatchEncoder &benc,
+                                    seal::Decryptor &dec,
+                                    int size = 784);
 }

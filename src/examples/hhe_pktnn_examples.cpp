@@ -17,7 +17,7 @@ int hhe_pktnn_mnist_inference() {
 
     Analyst analyst;
 
-
+    // ---------------------- Analyst ----------------------
     utils::print_line(__LINE__);
     std::cout << "----- Analyst -----" << "\n";
     std::cout << "Analyst constructs the HE context" << "\n";
@@ -33,6 +33,7 @@ int hhe_pktnn_mnist_inference() {
     seal::BatchEncoder analyst_he_benc(*context);
     seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
     seal::Evaluator analyst_he_eval(*context);
+    seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
     bool use_bsgs = false;
     std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
     keygen.create_galois_keys(gk_indices, analyst.he_gk);
@@ -48,20 +49,37 @@ int hhe_pktnn_mnist_inference() {
     pktnn::pktmat fc_bias;
     fc_weight = fc.getWeight();
     fc_bias = fc.getBias();
-    fc_weight.printMat();
+    // fc_weight.printMat();
 
     utils::print_line(__LINE__);
     std::cout << "Analyst encrypts the weights and biases" << "\n";
     auto qualifiers = context->first_context_data()->qualifiers();
     std::cout << "Batching enabled: " << std::boolalpha << qualifiers.using_batching << std::endl;
-    // fc.encryptWeight(analyst.he_pk, analyst_he_benc, analyst_he_enc);
-    // fc.encryptBias(analyst.he_pk, analyst_he_benc, analyst_he_enc);
-
-    // utils::print_line(__LINE__); 
-    // std::cout << "---- User ----" << std::endl;
-    // std::cout << "User creates the symmetric key" << std::endl;
+    std::cout << "Encrypting the transposed weight..." << "\n";
+    pktnn::pktmat weight_t;
+    weight_t.transposeOf(fc_weight);
+    std::vector<seal::Ciphertext> enc_weight = sealhelper::encrypt_weight(weight_t, analyst.he_pk, analyst_he_benc, analyst_he_enc);
+    std::cout << "Decrypting transposed weight to check..." << "\n";
+    pktnn::pktmat dec_weight_t = sealhelper::decrypt_weight(enc_weight, analyst.he_sk, analyst_he_benc, analyst_he_dec, 784);
+    dec_weight_t.printMat();
+    std::cout << "Encrypting the bias..." << "\n";
     
-    // std::cout << "User load his data" << std::endl;
+    std::cout << "Analyst sends the encrypted weights and bias to the CSP..." << "\n";
+
+    // ---------------------- Client (Data Owner) ----------------------
+    // utils::print_line(__LINE__); 
+    // std::cout << "---- Client (Data Owner) ----" << std::endl;
+    
+    // std::cout << "Client loads his MNIST data" << std::endl;
+    // int numTestSamples = 10000;
+    // pktnn::pktmat mnistTestLabels;
+    // pktnn::pktmat mnistTestImages;
+    // pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false); // numTestSamples x (28*28)
+    // pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false); // numTestSamples x 1
+    // std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
+    // std::cout << "Each image is flattened into a vector of size: " << mnistTestImages.cols() << " (=28x28)" << "\n";
+    
+    // std::cout << "User creates the symmetric key" << std::endl;
     
     // std::cout << "User encrypts his data using the symmetric key" << std::endl;
     

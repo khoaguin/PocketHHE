@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "pktnn_tools.h"
 #include "pktnn_consts.h"
@@ -61,6 +62,7 @@ namespace pktnn {
         int getElem(int r, int c) const;
         bool getDeleteOnDestruct();
         int getMaxIndexInRow(int r) const;
+        std::vector<int64_t> getRow(int r) const;
 
         // setters
         pktmat& setMat(int r, int c, int* m);
@@ -74,6 +76,7 @@ namespace pktnn {
         pktmat& fastReturn();
 
         pktmat& printMat(std::ostream& outTo = std::cout);
+        pktmat& printShape(std::ostream& outTo = std::cout);
 
         // mat calculations
         pktmat& matMulMat(pktmat& mat1, pktmat& mat2);
