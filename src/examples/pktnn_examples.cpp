@@ -475,6 +475,7 @@ int fc_int_dfa_mnist_one_layer_inference() {
     pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false); // numTestSamples x (28*28)
     pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false); // numTestSamples x 1
     std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
+    // mnistTestImages.printMat();
 
     std::cout << "----- Initial Test Before Loading Weights -----\n";
     pktnn::pktmat testTargetMat(numTestSamples, config::num_classes);
