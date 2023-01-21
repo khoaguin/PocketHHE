@@ -3,9 +3,11 @@ cmake_minimum_required(VERSION 3.13)
 set(PROJECT_NAME
     MyPocketNN
 )
+
 set(SOURCE_DIR
     src
 )
+
 set(PROJECT_SOURCE
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/examples/pktnn_examples.cpp
@@ -20,6 +22,7 @@ set(PROJECT_SOURCE
 set(LIBRARIES_DIR
     libs
 )
+
 set(LIBRARIES 
     pocketnn
     aes
@@ -59,6 +62,7 @@ else()
     add_definitions("-DOC_ENABLE_PORTABLE_AES")
   endif()
 endif()
+
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE})
 
