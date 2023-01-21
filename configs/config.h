@@ -9,6 +9,7 @@ namespace config
     extern int seclevel;
     extern bool use_bsgs;  // used when creating the galois key
     // MNIST parameters
+    extern int num_test_samples;
     extern int num_classes;
     extern int mnist_rows;
     extern int mnist_cols;

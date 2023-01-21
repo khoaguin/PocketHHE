@@ -11,11 +11,20 @@ struct Analyst {
     seal::GaloisKeys he_gk;
 };
 
+struct Client {
+    std::vector<uint64_t> k;  // the secret symmetric keys
+    std::vector<seal::Ciphertext> c_k;  // the HE encrypted symmetric keys
+    pktnn::pktmat im;  // the plaintext image
+    std::vector<uint64_t> m = {1, 0, 2, 3};  // the symmetric encrypted image
+    std::vector<uint64_t> c_im;  // the symmetric encrypted image
+};
+
 
 int hhe_pktnn_mnist_inference() {
     utils::print_example_banner("Privacy-preserving Inference with a 1-layer Neural Network");
 
     Analyst analyst;
+    Client client;
 
     // ---------------------- Analyst ----------------------
     utils::print_line(__LINE__);
@@ -55,34 +64,39 @@ int hhe_pktnn_mnist_inference() {
     std::cout << "Analyst encrypts the weights and biases" << "\n";
     auto qualifiers = context->first_context_data()->qualifiers();
     std::cout << "Batching enabled: " << std::boolalpha << qualifiers.using_batching << std::endl;
-    std::cout << "Encrypting the transposed weight..." << "\n";
+    std::cout << "Encrypt the transposed weight..." << "\n";
     pktnn::pktmat weight_t;
     weight_t.transposeOf(fc_weight);
     std::vector<seal::Ciphertext> enc_weight = sealhelper::encrypt_weight(weight_t, analyst.he_pk, analyst_he_benc, analyst_he_enc);
-    std::cout << "Decrypting transposed weight to check..." << "\n";
-    pktnn::pktmat dec_weight_t = sealhelper::decrypt_weight(enc_weight, analyst.he_sk, analyst_he_benc, analyst_he_dec, 784);
-    dec_weight_t.printMat();
-    std::cout << "Encrypting the bias..." << "\n";
-    
+    // std::cout << "Decrypt and print the transposed weight to check..." << "\n";
+    // pktnn::pktmat dec_weight_t = sealhelper::decrypt_weight(enc_weight, analyst.he_sk, analyst_he_benc, analyst_he_dec, 784);
+    // dec_weight_t.printMat();
+    std::cout << "Encrypt the bias..." << "\n";
+    std::vector<seal::Ciphertext> enc_bias = sealhelper::encrypt_bias(fc_bias, analyst.he_pk, analyst_he_enc);
+    // std::cout << "Decrypt the bias to check..." << "\n";
+    // pktnn::pktmat dec_bias = sealhelper::decrypt_bias(enc_bias, analyst.he_sk, analyst_he_dec); 
+    // dec_bias.printMat();
     std::cout << "Analyst sends the encrypted weights and bias to the CSP..." << "\n";
 
     // ---------------------- Client (Data Owner) ----------------------
-    // utils::print_line(__LINE__); 
-    // std::cout << "---- Client (Data Owner) ----" << std::endl;
+    utils::print_line(__LINE__); 
+    std::cout << "---- Client (Data Owner) ----" << std::endl;
     
-    // std::cout << "Client loads his MNIST data" << std::endl;
-    // int numTestSamples = 10000;
-    // pktnn::pktmat mnistTestLabels;
-    // pktnn::pktmat mnistTestImages;
-    // pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false); // numTestSamples x (28*28)
-    // pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false); // numTestSamples x 1
-    // std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
-    // std::cout << "Each image is flattened into a vector of size: " << mnistTestImages.cols() << " (=28x28)" << "\n";
+    utils::print_line(__LINE__); 
+    std::cout << "Client loads his MNIST data" << std::endl;
+    pktnn::pktmat mnistTestLabels;
+    pktnn::pktmat mnistTestImages;
+    pktnn::pktloader::loadMnistImages(mnistTestImages, config::num_test_samples, false); // numTestSamples x (28*28)
+    pktnn::pktloader::loadMnistLabels(mnistTestLabels, config::num_test_samples, false); // numTestSamples x 1
+    std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
+    std::cout << "Each image is flattened into a vector of size: " << mnistTestImages.cols() << " (=28x28)" << "\n";
     
-    // std::cout << "User creates the symmetric key" << std::endl;
-    
-    // std::cout << "User encrypts his data using the symmetric key" << std::endl;
-    
+    utils::print_line(__LINE__); 
+    std::cout << "User creates the symmetric key" << std::endl;
+    client.k = pastahelper::get_symmetric_key();
+    pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
+    utils::print_line(__LINE__); 
+    std::cout << "User encrypts his data using the symmetric key" << std::endl;
     // std::cout << "User encrypts his symmetric key using HE" << std::endl;
 
 

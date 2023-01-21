@@ -18,18 +18,34 @@ namespace sealhelper {
     void print_parameters(const seal::SEALContext &context);
 
     /*
-    Helper function: Encrypts the weight matrix into a vector of ciphertexts of its column vectors.
+    Helper function: Encrypts the weight matrix (each row of the matrix into a ciphertext)
     */
-    std::vector<seal::Ciphertext> encrypt_weight(pktnn::pktmat &mat, 
-                                    const seal::PublicKey &he_pk, 
-                                    const seal::BatchEncoder &benc, 
+    std::vector<seal::Ciphertext> encrypt_weight(pktnn::pktmat &weight,
+                                    const seal::PublicKey &he_pk,
+                                    const seal::BatchEncoder &benc,
                                     const seal::Encryptor &enc);
     /* 
-    Helper function: Decrypt the encrypted weight into a matrix of plaintexts.
+    Helper function: Decrypt the encrypted weight.
     */
     pktnn::pktmat decrypt_weight(std::vector<seal::Ciphertext> &enc_weight,
-                                    const seal::SecretKey &he_sk,
-                                    const seal::BatchEncoder &benc,
-                                    seal::Decryptor &dec,
-                                    int size = 784);
-}
+                                 const seal::SecretKey &he_sk,
+                                 const seal::BatchEncoder &benc,
+                                 seal::Decryptor &dec,
+                                 int vec_size = 784);
+
+    /*
+    Helper function: Encrypt each number in the bias vector into a ciphertext (no batch encoder needed).
+    */
+    std::vector<seal::Ciphertext> encrypt_bias(pktnn::pktmat &bias,
+                                    const seal::PublicKey &he_pk,
+                                    const seal::Encryptor &enc);
+
+    /*
+    Helper function: Decrypt the encrypted bias.
+    */
+    pktnn::pktmat decrypt_bias(std::vector<seal::Ciphertext> &enc_bias, 
+                               const seal::SecretKey &he_sk,  
+                               seal::Decryptor &dec);
+
+
+}  // end of sealhelper namespace

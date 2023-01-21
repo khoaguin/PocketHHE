@@ -132,19 +132,53 @@ pktnn::pktmat decrypt_weight(std::vector<seal::Ciphertext> &enc_weight,
         seal::Plaintext plain_result;
         dec.decrypt(encrypted_row, plain_result);
         benc.decode(plain_result, plain);
-        // std::vector<int64_t> dec_row(size);
-        // for (int i = 0; i < size; ++i) {
-        //     dec_row[i] = plain[i];
-        // }
         for (int c = 0; c < vec_size; ++c) {
-            // std::cout << plain[c] << " ";
             weight.setElem(r, c, plain[c]);
         }
-        // std::cout << "\n";
-        // break;
     }
     
     return weight;
+}
+
+/*
+Helper function: Encrypts the weight matrix into a vector of ciphertexts of its column vectors.
+*/
+std::vector<seal::Ciphertext> encrypt_bias(pktnn::pktmat &bias,
+                                           const seal::PublicKey &he_pk,
+                                           const seal::Encryptor &enc) 
+{
+    std::vector<seal::Ciphertext> encrypted_bias;
+    for (int i = 0; i < bias.cols(); ++i) {
+        int bi = bias.getElem(0, i);
+        std::stringstream stream;
+        stream << std::hex << bi;
+        std::string plain_bi(stream.str());
+        seal::Ciphertext encrypted_bi;
+        enc.encrypt(plain_bi, encrypted_bi);
+        encrypted_bias.push_back(encrypted_bi);
+    }
+    return encrypted_bias;
+}
+
+/*
+Helper function: Decrypt the encrypted bias.
+*/
+pktnn::pktmat decrypt_bias(std::vector<seal::Ciphertext> &enc_bias, 
+                           const seal::SecretKey &he_sk,  
+                           seal::Decryptor &dec)
+{
+    pktnn::pktmat dec_bias(1, enc_bias.size());
+    for (int i = 0; i < enc_bias.size(); ++i) {
+        seal::Ciphertext enc_bi = enc_bias[i];
+        seal::Plaintext dec_bi;
+        dec.decrypt(enc_bi, dec_bi);
+        std::string plain_bi = dec_bi.to_string();
+        std::stringstream stream(plain_bi);
+        int bi;
+        stream >> std::hex >> bi;
+        dec_bias.setElem(0, i, bi);
+    }
+    return dec_bias;
 }
 
 
