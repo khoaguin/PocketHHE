@@ -25,4 +25,15 @@ namespace utils {
         std::cout << "Line " << std::setw(3) << line_number << " --> ";
     }
 
+    /*
+    Helper function: Turn a vector of int64_t that contains positive integers into uint64_t.
+    */
+    std::vector<uint64_t> int64_to_uint64(std::vector<int64_t> vec) {
+        std::vector<uint64_t> result;
+        for (auto i : vec) {
+            result.push_back(static_cast<uint64_t>(i));
+        }
+        return result;
+    }
+
 }

@@ -54,6 +54,35 @@ std::vector<uint64_t> get_symmetric_key() {
             0x06c6c, 0x0ea76, 0x09af5, 0x0bea6, 0x08eea, 0x0fbb6, 0x09e45, 0x0e9db,
             0x0d106, 0x0e7fd, 0x04ddf, 0x08bb8, 0x0a3a4, 0x03bcd, 0x036d9, 0x05acf,
     };
+};
+
+/*
+Helper function: Symmetric encryption
+*/
+std::vector<std::vector<uint64_t>> symmetric_encrypt(const pasta::PASTA &encryptor, const pktnn::pktmat &plaintext) {
+    std::vector<std::vector<uint64_t>> ciphertexts;
+    for (int i = 0; i < plaintext.rows(); i++) {
+        std::vector<int64_t> row = plaintext.getRow(i);
+        std::vector<uint64_t> uint_row = utils::int64_to_uint64(row);
+        std::vector<uint64_t> encrypted_row = encryptor.encrypt(uint_row);
+        // utils::print_vec(encrypted_row, encrypted_row.size(), "encrypted_row");
+        ciphertexts.push_back(encrypted_row);
+    }
+    return ciphertexts;
+};
+
+/*
+Helper function: Symmetric decryption
+*/
+std::vector<std::vector<uint64_t>> symmetric_decrypt(const pasta::PASTA &encryptor, 
+                                                     const std::vector<std::vector<uint64_t>> &ciphertext) {
+    std::vector<std::vector<uint64_t>> plaintexts;
+    for (int i = 0; i < ciphertext.size(); i++) {
+        std::vector<uint64_t> decrypted_row = encryptor.decrypt(ciphertext[i]);
+        plaintexts.push_back(decrypted_row);
+        // utils::print_vec(decrypted_row, decrypted_row.size(), "decrypted_row");
+    }
+    return plaintexts;
 }
 
 

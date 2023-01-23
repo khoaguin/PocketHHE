@@ -9,7 +9,7 @@ namespace config
     int seclevel = 128;
     bool use_bsgs = false;
     // MNIST parameters
-    int num_test_samples = 1;
+    int num_test_samples = 2;
     int num_classes = 10;
     int mnist_rows = 28;
     int mnist_cols = 28;

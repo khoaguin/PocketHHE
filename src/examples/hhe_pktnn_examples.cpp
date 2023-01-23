@@ -14,9 +14,9 @@ struct Analyst {
 struct Client {
     std::vector<uint64_t> k;  // the secret symmetric keys
     std::vector<seal::Ciphertext> c_k;  // the HE encrypted symmetric keys
-    pktnn::pktmat im;  // the plaintext image
-    std::vector<uint64_t> m = {1, 0, 2, 3};  // the symmetric encrypted image
-    std::vector<uint64_t> c_im;  // the symmetric encrypted image
+    pktnn::pktmat mnistTestImages;  // the plaintext test images
+    pktnn::pktmat mnistTestLabels;  // the plaintext test labels
+    std::vector<std::vector<uint64_t>> c_ims;  // the symmetric encrypted images
 };
 
 
@@ -90,15 +90,19 @@ int hhe_pktnn_mnist_inference() {
     pktnn::pktloader::loadMnistLabels(mnistTestLabels, config::num_test_samples, false); // numTestSamples x 1
     std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
     std::cout << "Each image is flattened into a vector of size: " << mnistTestImages.cols() << " (=28x28)" << "\n";
-    
-    utils::print_line(__LINE__); 
+    client.mnistTestImages = mnistTestImages;    
+    client.mnistTestLabels = mnistTestLabels;
+
+    utils::print_line(__LINE__);
     std::cout << "User creates the symmetric key" << std::endl;
     client.k = pastahelper::get_symmetric_key();
     pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
-    utils::print_line(__LINE__); 
+    std::cout << "Symmetric key size: " << client.k.size() << "\n";
+    utils::print_line(__LINE__);
+    // client.mnistTestImages.printMat();
     std::cout << "User encrypts his data using the symmetric key" << std::endl;
-    // std::cout << "User encrypts his symmetric key using HE" << std::endl;
-
+    client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.mnistTestImages);  // the symmetric encrypted images
+    // auto dec_ims = pastahelper::symmetric_decrypt(SymmetricEncryptor, client.c_ims);
 
     // utils::print_line(__LINE__); 
     // std::cout << "---- CSP ----" << std::endl;

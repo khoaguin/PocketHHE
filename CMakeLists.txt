@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 set(PROJECT_NAME
-    MyPocketNN
+  PocketHHE 
 )
 
 set(SOURCE_DIR
