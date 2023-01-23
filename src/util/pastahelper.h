@@ -29,4 +29,13 @@ namespace pastahelper {
     */
     std::vector<std::vector<uint64_t>> symmetric_decrypt(const pasta::PASTA &encryptor, const std::vector<std::vector<uint64_t>> &ciphertext);
 
+    /*
+    Helper function: Encrypt the symmetric key using HE
+    This function is adapted from https://github.com/IAIK/hybrid-HE-framework/blob/master/ciphers/pasta_3/seal/pasta_3_seal.cpp
+    */
+    std::vector<seal::Ciphertext> encrypt_symmetric_key(const std::vector<uint64_t> &ssk, 
+                                                        bool batch_encoder,
+                                                        const seal::BatchEncoder &benc,
+                                                        const seal::Encryptor &enc);
+
 }

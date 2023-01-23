@@ -94,15 +94,24 @@ int hhe_pktnn_mnist_inference() {
     client.mnistTestLabels = mnistTestLabels;
 
     utils::print_line(__LINE__);
-    std::cout << "User creates the symmetric key" << std::endl;
+    std::cout << "Client creates the symmetric key" << std::endl;
     client.k = pastahelper::get_symmetric_key();
     pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
     std::cout << "Symmetric key size: " << client.k.size() << "\n";
+    // utils::print_vec(client.k, client.k.size(), "Symmetric key: ");
     utils::print_line(__LINE__);
     // client.mnistTestImages.printMat();
-    std::cout << "User encrypts his data using the symmetric key" << std::endl;
+    std::cout << "Client encrypts his data using the symmetric key" << std::endl;
     client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.mnistTestImages);  // the symmetric encrypted images
     // auto dec_ims = pastahelper::symmetric_decrypt(SymmetricEncryptor, client.c_ims);
+    utils::print_line(__LINE__);
+    std::cout << "Client encrypts his symmetric key using HE" << std::endl;
+    client.c_k = pastahelper::encrypt_symmetric_key(client.k, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
+    pasta::PASTA_SEAL SymmetricDecryptor(context, analyst.he_pk, analyst.he_sk, analyst.he_rk, analyst.he_gk);
+    std::vector<uint64_t> dec_ck = SymmetricDecryptor.decrypt_result(client.c_k, config::USE_BATCH);
+    // utils::print_vec(dec_ck, dec_ck.size(), "Decrypted symmetric key: ");
+    std::cout << "Decrypted symmetric key size: " << dec_ck.size() << "\n";
+    std::cout << "It is ok if the decrypted key size and the key size are different (128 vs 256). It's a part of the pasta library"  << "\n";
 
     // utils::print_line(__LINE__); 
     // std::cout << "---- CSP ----" << std::endl;

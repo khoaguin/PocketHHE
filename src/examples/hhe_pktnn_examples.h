@@ -11,6 +11,7 @@
 #include "../util/pastahelper.h"
 #include "../util/utils.h"
 #include "../pasta/pasta_3_plain.h"
+#include "../pasta/pasta_3_seal.h"
 
 
 int hhe_pktnn_mnist_inference();

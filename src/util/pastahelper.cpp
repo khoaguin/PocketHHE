@@ -86,5 +86,30 @@ std::vector<std::vector<uint64_t>> symmetric_decrypt(const pasta::PASTA &encrypt
 }
 
 
+
+std::vector<seal::Ciphertext> encrypt_symmetric_key(const std::vector<uint64_t> &ssk, 
+                                                    bool batch_encoder,
+                                                    const seal::BatchEncoder &benc,
+                                                    const seal::Encryptor &enc) {
+    size_t PASTA_T_COPPIED = 128;  // get this constant from the file 'pasta_3_plain.h
+    size_t slots = benc.slot_count();
+    size_t halfslots = slots >> 1;
+    
+    (void) batch_encoder;  // patched implementation: ignore param
+    std::vector<seal::Ciphertext> enc_sk;
+    enc_sk.resize(1);
+    seal::Plaintext k;
+    std::vector<uint64_t> key_tmp(halfslots + PASTA_T_COPPIED, 0);
+    for (size_t i = 0; i < PASTA_T_COPPIED; i++) {
+        key_tmp[i] = ssk[i];
+        key_tmp[i + halfslots] = ssk[i + PASTA_T_COPPIED];
+    }
+    benc.encode(key_tmp, k);
+    enc.encrypt(k, enc_sk[0]);
+    return enc_sk;
+}
+
+
+
 }  // end of the pastahelper namespace
 
