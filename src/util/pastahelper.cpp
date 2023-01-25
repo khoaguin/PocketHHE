@@ -109,6 +109,24 @@ std::vector<seal::Ciphertext> encrypt_symmetric_key(const std::vector<uint64_t> 
     return enc_sk;
 }
 
+/*
+Helper function: Encrypt the symmetric key using HE
+This function is adapted from https://github.com/IAIK/hybrid-HE-framework/blob/master/ciphers/pasta_3/seal/pasta_3_seal.cpp
+*/
+void decomposition (pasta::PASTA_SEAL &HHE,
+                    const std::vector<seal::Ciphertext> &c_k,  // the client's HE encrypted symmetric key
+                    const std::vector<std::vector<uint64_t>> &c_ims,  // the client's symmetric encrypted images
+                    std::vector<seal::Ciphertext> &c_prime,  // 
+                    bool use_batch) {
+    for (int i = 0; i < c_ims.size(); ++i) {
+        std::vector<uint64_t> c_im = c_ims[i];
+        std::cout << "c_im.size() = " << c_im.size() << std::endl;
+        std::vector<seal::Ciphertext> c_im_prime = HHE.decomposition(c_im, c_k, use_batch);
+        std::cout << "c_im_prime.size() = " << c_im_prime.size() << std::endl;
+        // seal::Ciphertext c_prime_i;
+    }
+}
+
 
 
 }  // end of the pastahelper namespace

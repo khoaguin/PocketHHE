@@ -19,16 +19,24 @@ struct Client {
     std::vector<std::vector<uint64_t>> c_ims;  // the symmetric encrypted images
 };
 
+struct CSP {
+    std::vector<seal::Ciphertext> c_prime;  // the decomposed HE encrypted data of user's c_i
+    seal::Ciphertext c_res;  // the HE encrypted results that will be sent to the Analyst
+    seal::SecretKey he_sk;
+};
+
 
 int hhe_pktnn_mnist_inference() {
     utils::print_example_banner("Privacy-preserving Inference with a 1-layer Neural Network");
 
+    // the actors in the protocol
     Analyst analyst;
     Client client;
+    CSP csp;
 
     // ---------------------- Analyst ----------------------
-    utils::print_line(__LINE__);
-    std::cout << "----- Analyst -----" << "\n";
+    std::cout << "\n"; utils::print_line(__LINE__);
+    std::cout << "---------------------- Analyst ----------------------" << "\n";
     std::cout << "Analyst constructs the HE context" << "\n";
     std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context();
     sealhelper::print_parameters(*context);
@@ -79,8 +87,8 @@ int hhe_pktnn_mnist_inference() {
     std::cout << "Analyst sends the encrypted weights and bias to the CSP..." << "\n";
 
     // ---------------------- Client (Data Owner) ----------------------
-    utils::print_line(__LINE__); 
-    std::cout << "---- Client (Data Owner) ----" << std::endl;
+    std::cout << "\n"; utils::print_line(__LINE__); 
+    std::cout << "---------------------- Client (Data Owner) ----------------------" << std::endl;
     
     utils::print_line(__LINE__); 
     std::cout << "Client loads his MNIST data" << std::endl;
@@ -88,7 +96,7 @@ int hhe_pktnn_mnist_inference() {
     pktnn::pktmat mnistTestImages;
     pktnn::pktloader::loadMnistImages(mnistTestImages, config::num_test_samples, false); // numTestSamples x (28*28)
     pktnn::pktloader::loadMnistLabels(mnistTestLabels, config::num_test_samples, false); // numTestSamples x 1
-    std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
+    std::cout << "Number of loaded test images = " << mnistTestImages.rows() << "\n";
     std::cout << "Each image is flattened into a vector of size: " << mnistTestImages.cols() << " (=28x28)" << "\n";
     client.mnistTestImages = mnistTestImages;    
     client.mnistTestLabels = mnistTestLabels;
@@ -103,6 +111,7 @@ int hhe_pktnn_mnist_inference() {
     // client.mnistTestImages.printMat();
     std::cout << "Client encrypts his data using the symmetric key" << std::endl;
     client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.mnistTestImages);  // the symmetric encrypted images
+    std::cout << "Number of encrypted images = " << client.c_ims.size() << "\n";
     // auto dec_ims = pastahelper::symmetric_decrypt(SymmetricEncryptor, client.c_ims);
     utils::print_line(__LINE__);
     std::cout << "Client encrypts his symmetric key using HE" << std::endl;
@@ -113,13 +122,24 @@ int hhe_pktnn_mnist_inference() {
     std::cout << "Decrypted symmetric key size: " << dec_ck.size() << "\n";
     std::cout << "It is ok if the decrypted key size and the key size are different (128 vs 256). It's a part of the pasta library"  << "\n";
 
-    // utils::print_line(__LINE__); 
-    // std::cout << "---- CSP ----" << std::endl;
+    std::cout << "\n"; utils::print_line(__LINE__); 
+    std::cout << "-------------------------- CSP ----------------------" << std::endl; 
+    // CSP creates a new HE secret key from the context (this is needed to construct the PASTA object for decomposition)
+    seal::KeyGenerator csp_keygen(*context);
+    csp.he_sk = csp_keygen.secret_key();
+    // inspect if the csp's HE secret key is the same as the analyst's HE secret key by commeting out the following lines one at a time
+    // csp.he_sk.save(std::cout);
+    // analyst.he_sk.save(std::cout);
+    utils::print_line(__LINE__);
+    std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
+    pasta::PASTA_SEAL HHE(context, analyst.he_pk, csp.he_sk, analyst.he_rk, analyst.he_gk);
+    std::vector<seal::Ciphertext> c_im_prime = HHE.decomposition(client.c_ims[0], client.c_k, config::USE_BATCH);
+    std::cout << "CSP evaluates the HE encrypted neural network on the HE encrypted data" << std::endl;
+    // for (auto i : c_im_prime) {
+    //     std::cout << i.size() << std::endl;
+    // }
+    // pastahelper::decomposition(HHE, client.c_k, client.c_ims, csp.c_prime, config::USE_BATCH);
 
-    // std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
-
-    // std::cout << "CSP evaluates the HE encrypted neural network on the HE encrypted data" << std::endl;
-    
     // utils::print_line(__LINE__); 
     // std::cout << "---- Analyst ----" << std::endl;
 
