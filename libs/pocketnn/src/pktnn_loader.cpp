@@ -2,9 +2,11 @@
 
 using namespace pktnn;
 
-void pktnn::pktloader::csvLoader(pktmat& saveToMat, std::string fileName) {
+void pktnn::pktloader::csvLoader(pktmat &saveToMat, std::string fileName)
+{
     std::ifstream dataFile(fileName);
-    if (dataFile.fail()) {
+    if (dataFile.fail())
+    {
         std::cout << fileName << " does not exist!\n";
         return;
     }
@@ -17,11 +19,13 @@ void pktnn::pktloader::csvLoader(pktmat& saveToMat, std::string fileName) {
     int numCols = 0;
     int numRows = 0;
 
-    while (std::getline(check1, tokenized, token)) {
+    while (std::getline(check1, tokenized, token))
+    {
         ++numCols;
     }
 
-    while (std::getline(dataFile, oneLine)) {
+    while (std::getline(dataFile, oneLine))
+    {
         ++numRows;
     }
 
@@ -37,11 +41,13 @@ void pktnn::pktloader::csvLoader(pktmat& saveToMat, std::string fileName) {
     saveToMat.resetZero(numRows, numCols);
 
     int r = 0;
-    while (std::getline(dataFile, oneLine)) {
+    while (std::getline(dataFile, oneLine))
+    {
         int c = 0;
         check1.clear();
         check1.str(oneLine);
-        while (std::getline(check1, tokenized, token)) {
+        while (std::getline(check1, tokenized, token))
+        {
             saveToMat.setElem(r, c, std::stoi(tokenized)); // round off
             ++c;
         }
@@ -78,9 +84,11 @@ void pktnn::pktloader::csvLoader(pktmat& saveToMat, std::string fileName) {
 //     _downloadDataset(dataset);
 // }
 
-void pktnn::pktloader::parseDatasetDiabetes(pktmat& saveToMat, std::string fileName) {
-    std::ifstream dataFile(fileName); //fstream
-    if (dataFile.fail()) {
+void pktnn::pktloader::parseDatasetDiabetes(pktmat &saveToMat, std::string fileName)
+{
+    std::ifstream dataFile(fileName); // fstream
+    if (dataFile.fail())
+    {
         // TODO: error handling
     }
 
@@ -91,11 +99,13 @@ void pktnn::pktloader::parseDatasetDiabetes(pktmat& saveToMat, std::string fileN
     int numCols = 0;
     int numRows = 0;
 
-    while (std::getline(check1, tokenized, '\t')) {
+    while (std::getline(check1, tokenized, '\t'))
+    {
         ++numCols;
     }
 
-    while (std::getline(dataFile, oneLine)) {
+    while (std::getline(dataFile, oneLine))
+    {
         ++numRows;
     }
 
@@ -108,11 +118,13 @@ void pktnn::pktloader::parseDatasetDiabetes(pktmat& saveToMat, std::string fileN
     saveToMat.resetZero(numRows, numCols);
 
     int r = 0;
-    while (std::getline(dataFile, oneLine)) {
+    while (std::getline(dataFile, oneLine))
+    {
         int c = 0;
         check1.clear();
-        check1.str(oneLine);        
-        while (std::getline(check1, tokenized, '\t')) {
+        check1.str(oneLine);
+        while (std::getline(check1, tokenized, '\t'))
+        {
             saveToMat.setElem(r, c, std::stoi(tokenized)); // round off
             ++c;
         }
@@ -122,7 +134,8 @@ void pktnn::pktloader::parseDatasetDiabetes(pktmat& saveToMat, std::string fileN
     dataFile.close();
 }
 
-int pktnn::pktloader::reverseInt(int i) {
+int pktnn::pktloader::reverseInt(int i)
+{
     unsigned char ch1, ch2, ch3, ch4;
     ch1 = i & 255;
     ch2 = (i >> 8) & 255;
@@ -131,10 +144,12 @@ int pktnn::pktloader::reverseInt(int i) {
     return ((int)ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
 }
 
-pktmat3d** pktnn::pktloader::loadMnistImages(int numImagesToLoad) {
+pktmat3d **pktnn::pktloader::loadMnistImages(int numImagesToLoad)
+{
     std::ifstream file("data/mnist/train-images.idx3-ubyte", std::ios::binary);
-    pktmat3d** imageBatches = nullptr;
-    if (file.is_open()) {
+    pktmat3d **imageBatches = nullptr;
+    if (file.is_open())
+    {
         // format for the beginning of the file (32 bits each)
         // should be 2051, 60000, 28, 28
         int magicNumber = 0;
@@ -142,50 +157,72 @@ pktmat3d** pktnn::pktloader::loadMnistImages(int numImagesToLoad) {
         int numRows = 0;
         int numCols = 0;
         // assumed to be assigned in advance
-        imageBatches = new pktmat3d* [numImagesToLoad];
+        imageBatches = new pktmat3d *[numImagesToLoad];
 
-        file.read((char*)&magicNumber, sizeof(magicNumber));
+        file.read((char *)&magicNumber, sizeof(magicNumber));
         magicNumber = pktloader::reverseInt(magicNumber);
 
-        file.read((char*)&numItems, sizeof(numItems));
+        file.read((char *)&numItems, sizeof(numItems));
         numItems = pktloader::reverseInt(numItems);
 
-        file.read((char*)&numRows, sizeof(numRows));
+        file.read((char *)&numRows, sizeof(numRows));
         numRows = pktloader::reverseInt(numRows);
 
-        file.read((char*)&numCols, sizeof(numCols));
+        file.read((char *)&numCols, sizeof(numCols));
         numCols = pktloader::reverseInt(numCols);
 
         std::cout << magicNumber << ", " << numItems << ", " << numRows << ", " << numCols << "\n";
 
-        for (int i = 0; i < numImagesToLoad; ++i) {
+        for (int i = 0; i < numImagesToLoad; ++i)
+        {
             imageBatches[i] = new pktmat3d(1, numRows, numCols);
-            for (int r = 0; r < numRows; ++r) {
-                for (int c = 0; c < numCols; ++c) {
+            for (int r = 0; r < numRows; ++r)
+            {
+                for (int c = 0; c < numCols; ++c)
+                {
                     unsigned char temp = 0;
-                    file.read((char*)&temp, sizeof(temp));
+                    file.read((char *)&temp, sizeof(temp));
                     imageBatches[i]->setElem(0, r, c, temp);
                 }
             }
         }
     }
-    else {
+    else
+    {
         std::cout << "Dataset is not loaded properly.\n";
     }
     return imageBatches;
 }
 
-void pktnn::pktloader::loadMnistImages(pktmat& images, int numImagesToLoad, bool isTrain) {
+void pktnn::pktloader::loadMnistImages(pktmat &images, int numImagesToLoad, bool isTrain, bool debugging)
+{
     std::string fileName;
-    if (isTrain) {
-        fileName = "data/mnist/train-images.idx3-ubyte";
+    if (isTrain)
+    {
+        if (debugging)
+        {
+            fileName = "../data/mnist/train-images.idx3-ubyte";
+        }
+        else
+        {
+            fileName = "data/mnist/train-images.idx3-ubyte";
+        }
     }
-    else {
-        fileName = "data/mnist/t10k-images.idx3-ubyte";
+    else
+    {
+        if (debugging)
+        {
+            fileName = "../data/mnist/t10k-images.idx3-ubyte";
+        }
+        else
+        {
+            fileName = "data/mnist/t10k-images.idx3-ubyte";
+        }
     }
 
     std::ifstream file(fileName, std::ios::binary);
-    if (file.is_open()) {
+    if (file.is_open())
+    {
         // format for the beginning of the file (32 bits each)
         // should be 2051, 60000, 28, 28
         int magicNumber = 0;
@@ -193,10 +230,10 @@ void pktnn::pktloader::loadMnistImages(pktmat& images, int numImagesToLoad, bool
         int numRows = 0;
         int numCols = 0;
 
-        file.read((char*)&magicNumber, sizeof(magicNumber));
-        file.read((char*)&numItems, sizeof(numItems));
-        file.read((char*)&numRows, sizeof(numRows));
-        file.read((char*)&numCols, sizeof(numCols));
+        file.read((char *)&magicNumber, sizeof(magicNumber));
+        file.read((char *)&numItems, sizeof(numItems));
+        file.read((char *)&numRows, sizeof(numRows));
+        file.read((char *)&numCols, sizeof(numCols));
 
         magicNumber = pktloader::reverseInt(magicNumber);
         numItems = pktloader::reverseInt(numItems);
@@ -210,71 +247,98 @@ void pktnn::pktloader::loadMnistImages(pktmat& images, int numImagesToLoad, bool
                   << ", Cols: " << numCols << "\n";
 
         images.resetZero(numImagesToLoad, numRows * numCols);
-        for (int i = 0; i < numImagesToLoad; ++i) {
-            for (int r = 0; r < numRows; ++r) {
-                for (int c = 0; c < numCols; ++c) {
+        for (int i = 0; i < numImagesToLoad; ++i)
+        {
+            for (int r = 0; r < numRows; ++r)
+            {
+                for (int c = 0; c < numCols; ++c)
+                {
                     unsigned char temp = 0;
-                    file.read((char*)&temp, sizeof(temp));
+                    file.read((char *)&temp, sizeof(temp));
                     int value = temp;
                     images.setElem(i, r * numCols + c, value);
                 }
             }
         }
     }
-    else {
+    else
+    {
         std::cout << "Dataset is not loaded properly.\n";
     }
 }
 
-void pktnn::pktloader::loadMnistLabels(pktmat& labels, int numLabelsToLoad, bool isTrain) {
+void pktnn::pktloader::loadMnistLabels(pktmat &labels, int numLabelsToLoad, bool isTrain, bool debugging)
+{
     std::string fileName;
-    if (isTrain) {
-        fileName = "data/mnist/train-labels.idx1-ubyte";
+    if (isTrain)
+    {
+        if (debugging)
+        {
+            fileName = "../data/mnist/train-labels.idx1-ubyte";
+        }
+        else
+        {
+            fileName = "data/mnist/train-labels.idx1-ubyte";
+        }
     }
-    else {
-        fileName = "data/mnist/t10k-labels.idx1-ubyte";
+    else
+    {
+        if (debugging)
+        {
+            fileName = "../data/mnist/t10k-labels.idx1-ubyte";
+        }
+        else
+        {
+            fileName = "data/mnist/t10k-labels.idx1-ubyte";
+        }
     }
 
     std::ifstream file(fileName, std::ios::binary);
-    if (file.is_open()) {
+    if (file.is_open())
+    {
         // format for the beginning of the file (32 bits each)
         // should be 2049, 60000
         int magicNumber = 0;
         int numItems = 0;
         labels.resetZero(numLabelsToLoad, 1);
 
-        file.read((char*)&magicNumber, sizeof(magicNumber));
+        file.read((char *)&magicNumber, sizeof(magicNumber));
         magicNumber = pktloader::reverseInt(magicNumber);
 
-        file.read((char*)&numItems, sizeof(numItems));
+        file.read((char *)&numItems, sizeof(numItems));
         numItems = pktloader::reverseInt(numItems);
 
         std::cout << "Loading " << fileName << "\n";
         std::cout << "Magic number: " << magicNumber << ", Total items: " << numItems << "\n";
-        
-        for (int i = 0; i < numLabelsToLoad; ++i) {
+
+        for (int i = 0; i < numLabelsToLoad; ++i)
+        {
             unsigned char temp = 0;
-            file.read((char*)&temp, sizeof(temp));
+            file.read((char *)&temp, sizeof(temp));
             labels.setElem(i, 0, temp);
         }
     }
-    else {
+    else
+    {
         std::cout << "Failed to load the label dataset.\n";
     }
 }
 
-
-void pktnn::pktloader::loadFashionMnistImages(pktmat& images, int numImagesToLoad, bool isTrain) {
+void pktnn::pktloader::loadFashionMnistImages(pktmat &images, int numImagesToLoad, bool isTrain)
+{
     std::string fileName;
-    if (isTrain) {
+    if (isTrain)
+    {
         fileName = "data/fashion_mnist/train-images-idx3-ubyte";
     }
-    else {
+    else
+    {
         fileName = "data/fashion_mnist/t10k-images-idx3-ubyte";
     }
 
     std::ifstream file(fileName, std::ios::binary);
-    if (file.is_open()) {
+    if (file.is_open())
+    {
         // format for the beginning of the file (32 bits each)
         // should be 2051, 60000, 28, 28
         int magicNumber = 0;
@@ -282,10 +346,10 @@ void pktnn::pktloader::loadFashionMnistImages(pktmat& images, int numImagesToLoa
         int numRows = 0;
         int numCols = 0;
 
-        file.read((char*)&magicNumber, sizeof(magicNumber));
-        file.read((char*)&numItems, sizeof(numItems));
-        file.read((char*)&numRows, sizeof(numRows));
-        file.read((char*)&numCols, sizeof(numCols));
+        file.read((char *)&magicNumber, sizeof(magicNumber));
+        file.read((char *)&numItems, sizeof(numItems));
+        file.read((char *)&numRows, sizeof(numRows));
+        file.read((char *)&numCols, sizeof(numCols));
 
         magicNumber = pktloader::reverseInt(magicNumber);
         numItems = pktloader::reverseInt(numItems);
@@ -294,60 +358,70 @@ void pktnn::pktloader::loadFashionMnistImages(pktmat& images, int numImagesToLoa
 
         std::cout << "Loading " << fileName << "\n";
         std::cout << "Magic number: " << magicNumber
-            << ", Total items: " << numItems
-            << ", Rows: " << numRows
-            << ", Cols: " << numCols << "\n";
+                  << ", Total items: " << numItems
+                  << ", Rows: " << numRows
+                  << ", Cols: " << numCols << "\n";
 
         images.resetZero(numImagesToLoad, numRows * numCols);
-        for (int i = 0; i < numImagesToLoad; ++i) {
-            for (int r = 0; r < numRows; ++r) {
-                for (int c = 0; c < numCols; ++c) {
+        for (int i = 0; i < numImagesToLoad; ++i)
+        {
+            for (int r = 0; r < numRows; ++r)
+            {
+                for (int c = 0; c < numCols; ++c)
+                {
                     unsigned char temp = 0;
-                    file.read((char*)&temp, sizeof(temp));
+                    file.read((char *)&temp, sizeof(temp));
                     int value = temp;
                     images.setElem(i, r * numCols + c, value);
                 }
             }
         }
     }
-    else {
+    else
+    {
         std::cout << "Dataset is not loaded properly.\n";
     }
 }
 
-void pktnn::pktloader::loadFashionMnistLabels(pktmat& labels, int numLabelsToLoad, bool isTrain) {
+void pktnn::pktloader::loadFashionMnistLabels(pktmat &labels, int numLabelsToLoad, bool isTrain)
+{
     std::string fileName;
-    if (isTrain) {
+    if (isTrain)
+    {
         fileName = "data/fashion_mnist/train-labels-idx1-ubyte";
     }
-    else {
+    else
+    {
         fileName = "data/fashion_mnist/t10k-labels-idx1-ubyte";
     }
 
     std::ifstream file(fileName, std::ios::binary);
-    if (file.is_open()) {
+    if (file.is_open())
+    {
         // format for the beginning of the file (32 bits each)
         // should be 2049, 60000
         int magicNumber = 0;
         int numItems = 0;
         labels.resetZero(numLabelsToLoad, 1);
 
-        file.read((char*)&magicNumber, sizeof(magicNumber));
+        file.read((char *)&magicNumber, sizeof(magicNumber));
         magicNumber = pktloader::reverseInt(magicNumber);
 
-        file.read((char*)&numItems, sizeof(numItems));
+        file.read((char *)&numItems, sizeof(numItems));
         numItems = pktloader::reverseInt(numItems);
 
         std::cout << "Loading " << fileName << "\n";
         std::cout << "Magic number: " << magicNumber << ", Total items: " << numItems << "\n";
 
-        for (int i = 0; i < numLabelsToLoad; ++i) {
+        for (int i = 0; i < numLabelsToLoad; ++i)
+        {
             unsigned char temp = 0;
-            file.read((char*)&temp, sizeof(temp));
+            file.read((char *)&temp, sizeof(temp));
             labels.setElem(i, 0, temp);
         }
     }
-    else {
+    else
+    {
         std::cout << "Failed to load the label dataset.\n";
     }
 }

@@ -9,6 +9,7 @@ namespace config
     int seclevel = 128;
     bool use_bsgs = false;
     bool USE_BATCH = true;
+    bool debugging = true;
     // MNIST parameters
     int num_test_samples = 1;
     int num_classes = 10;
