@@ -159,9 +159,9 @@ int hhe_pktnn_mnist_inference()
               << "\n";
     client.mnistTestImages.printMat();
     std::cout << "\n";
-    for (auto c_im : c_ims_prime)
+    for (auto c_im_he : c_ims_prime)
     {
-        auto decrypted_c_im = sealhelper::decrypting(c_im, analyst.he_sk, analyst_he_benc, *context, 112); // 112 = 784 / 7
+        auto decrypted_c_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc, *context, 112); // 112 = 784 / 7
         utils::print_vec(decrypted_c_im, decrypted_c_im.size(), "Decrypted image: ");
     }
     // function to decompose many images
