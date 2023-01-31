@@ -3,13 +3,14 @@
 
 namespace config
 {
+    extern bool debugging;
+    extern bool verbose;
     // HE parameters
     extern uint64_t plain_mod;
     extern uint64_t mod_degree;
     extern int seclevel;
     extern bool use_bsgs; // used when creating the galois key
     extern bool USE_BATCH;
-    extern bool debugging;
     // MNIST parameters
     extern int num_test_samples;
     extern int num_classes;
