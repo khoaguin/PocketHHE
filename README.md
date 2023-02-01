@@ -29,4 +29,4 @@ The PASTA library for HHE is built upon Microsoft's SEAL library. In this repo, 
 - `cmake -S . -B build -DCMAKE_PREFIX_PATH=libs/seal`  
 Here, `-DCMAKE_PREFIX_PATH` specifies the path to the installed SEAL library.
 - `cmake --build build`
-- Run the compiled binary, for example `./build/MyPocketNN`
+- Run the compiled binary, for example `./build/PocketHHE`

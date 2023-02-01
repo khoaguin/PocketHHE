@@ -39,6 +39,10 @@ int hhe_pktnn_mnist_inference()
 {
     utils::print_example_banner("Privacy-preserving Inference with a 1-layer Neural Network");
 
+    std::cout << "---------------------- Configs ----------------------"
+              << "\n";
+    std::cout << "Debugging = " << config::debugging << "\n";
+
     // the actors in the protocol
     Analyst analyst;
     Client client;
@@ -93,9 +97,10 @@ int hhe_pktnn_mnist_inference()
     pktnn::pktmat weight_t;
     weight_t.transposeOf(fc_weight);
     std::vector<seal::Ciphertext> enc_weight = sealhelper::encrypt_weight(weight_t, analyst.he_pk, analyst_he_benc, analyst_he_enc);
+    std::cout << "The encrypted weight vector has " << enc_weight.size() << " ciphertexts\n";
     if (config::verbose)
     {
-        std::cout << "Decrypt and print the transposed weight to check..."
+        std::cout << "Decrypt and print the transposed weight to check (open the csv file to compare)..."
                   << "\n";
         pktnn::pktmat dec_weight_t = sealhelper::decrypt_weight(enc_weight, analyst.he_sk, analyst_he_benc, analyst_he_dec, 784);
         dec_weight_t.printMat();
@@ -104,6 +109,7 @@ int hhe_pktnn_mnist_inference()
     std::cout << "Encrypt the bias..."
               << "\n";
     std::vector<seal::Ciphertext> enc_bias = sealhelper::encrypt_bias(fc_bias, analyst.he_pk, analyst_he_enc);
+    std::cout << "The encrypted bias vector has " << enc_bias.size() << " ciphertexts\n";
     if (config::verbose)
     {
         std::cout << "Decrypt the bias to check..."
@@ -194,12 +200,11 @@ int hhe_pktnn_mnist_inference()
 
     std::cout << "MNIST test image = ";
     client.mnistTestImages.printMat();
-    size_t len_c = 784 / c_ims_prime.size();
-    std::cout << "\n";
     for (auto c_im_he : c_ims_prime)
     {
         auto decrypted_c_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc, *context, 112); // 112 = 784 / 7
-        utils::print_vec(decrypted_c_im, decrypted_c_im.size(), "Decrypted image: ");
+        std::cout << "decrypted image size " << decrypted_c_im.size() << "\n";
+        utils::print_vec(decrypted_c_im, decrypted_c_im.size(), "Decrypted image");
     }
     // function to decompose many images
     // pastahelper::decomposition(HHE, client.c_k, client.c_ims, csp.c_prime, config::USE_BATCH);

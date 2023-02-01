@@ -3,7 +3,7 @@
 
 namespace config
 {
-    bool debugging = false;
+    bool debugging = true;
     bool verbose = false;
     // HE parameters
     uint64_t plain_mod = 65537;
