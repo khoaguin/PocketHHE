@@ -25,7 +25,7 @@ The PASTA library for HHE is built upon Microsoft's SEAL library. In this repo, 
 
 ## How to run
 - Before compiling the application, you can take a look at `src/config.cpp` and change the configurations to your own settings. Notes:
-    - The `debugging` variable should be set to `false` if you are not debugging the application (I used VSCode to debug so it might cause problems if you are not using VSCode to debug).
+    - The `debugging` variable should be set to `false` if you are not debugging the application and to `true` if you want to debug (I used VSCode to debug so it might cause problems if you are not using VSCode).
 - `cmake -S . -B build -DCMAKE_PREFIX_PATH=libs/seal`  
 Here, `-DCMAKE_PREFIX_PATH` specifies the path to the installed SEAL library.
 - `cmake --build build`

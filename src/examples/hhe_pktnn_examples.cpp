@@ -39,6 +39,7 @@ int hhe_pktnn_mnist_inference()
 {
     utils::print_example_banner("Privacy-preserving Inference with a 1-layer Neural Network");
 
+    utils::print_line(__LINE__);
     std::cout << "---------------------- Configs ----------------------"
               << "\n";
     std::cout << "Debugging = " << config::debugging << "\n";
@@ -48,7 +49,7 @@ int hhe_pktnn_mnist_inference()
     Client client;
     CSP csp;
 
-    // ---------------------- Analyst ----------------------
+    // The Analyst
     std::cout << "\n";
     utils::print_line(__LINE__);
     std::cout << "---------------------- Analyst ----------------------"
@@ -66,19 +67,27 @@ int hhe_pktnn_mnist_inference()
     keygen.create_public_key(analyst.he_pk); // HE public key for encryption
     keygen.create_relin_keys(analyst.he_rk); // HE relinearization key to reduce noise in ciphertexts
     seal::BatchEncoder analyst_he_benc(*context);
-    seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
-    seal::Evaluator analyst_he_eval(*context);
-    seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
     bool use_bsgs = false;
     std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
     keygen.create_galois_keys(gk_indices, analyst.he_gk); // the HE Galois keys for batch computation
+    seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
+    seal::Evaluator analyst_he_eval(*context);
+    seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
 
     utils::print_line(__LINE__);
     std::cout << "Analyst loads the weights and biases from csv files"
               << "\n";
     pktnn::pktfc fc(config::dim_input, config::num_classes);
-    fc.loadWeight("weights/1_layer/fc1_weight_50epochs.csv");
-    fc.loadBias("weights/1_layer/fc1_bias_50epochs.csv");
+    if (config::debugging)
+    {
+        fc.loadWeight("../weights/1_layer/fc1_weight_50epochs.csv");
+        fc.loadBias("../weights/1_layer/fc1_bias_50epochs.csv");
+    }
+    else
+    {
+        fc.loadWeight("weights/1_layer/fc1_weight_50epochs.csv");
+        fc.loadBias("weights/1_layer/fc1_bias_50epochs.csv");
+    }
     fc.printWeightShape();
     fc.printBiasShape();
     pktnn::pktmat fc_weight;
@@ -120,7 +129,7 @@ int hhe_pktnn_mnist_inference()
     std::cout << "Analyst sends the encrypted weights and bias to the CSP..."
               << "\n";
 
-    // ---------------------- Client (Data Owner) ----------------------
+    // Client (Data Owner)
     std::cout << "\n";
     utils::print_line(__LINE__);
     std::cout << "---------------------- Client (Data Owner) ----------------------" << std::endl;
@@ -167,6 +176,10 @@ int hhe_pktnn_mnist_inference()
     if (config::verbose)
     {
         client.mnistTestImages.printMat();
+        for (auto i : client.c_ims)
+        {
+            utils::print_vec(i, i.size(), "Encrypted image ");
+        }
         auto dec_ims = pastahelper::symmetric_decrypt(SymmetricEncryptor, client.c_ims);
         for (auto i : dec_ims)
         {
@@ -176,12 +189,14 @@ int hhe_pktnn_mnist_inference()
     std::cout << "The client sends the encrypted images and the encrypted symmetric key to the CSP..."
               << "\n";
 
+    // The Cloud Service Provider (CSP)
     std::cout << "\n";
     utils::print_line(__LINE__);
     std::cout << "-------------------------- CSP ----------------------" << std::endl;
     // CSP creates a new HE secret key from the context (this is needed to construct the PASTA object for decomposition)
     seal::KeyGenerator csp_keygen(*context);
     csp.he_sk = csp_keygen.secret_key();
+
     // inspect if the csp 's HE secret key is different than the analyst' s HE secret
     // very long outputs => comment each line at a time to compare the output
     // csp.he_sk.save(std::cout);
@@ -192,20 +207,43 @@ int hhe_pktnn_mnist_inference()
     utils::print_line(__LINE__);
     std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
     pasta::PASTA_SEAL HHE(context, analyst.he_pk, csp.he_sk, analyst.he_rk, analyst.he_gk);
-    // decomposing with just 1 image
+
+    /*
+    decomposing only 1 image
+    c_ims_prime will be the HE encrypted images of client.mnistTestLabels
+    */
     std::vector<seal::Ciphertext> c_ims_prime = HHE.decomposition(client.c_ims[0], client.c_k, config::USE_BATCH);
-    // c_ims_prime will be the HE encrypted images of client.mnistTestLabels
     std::cout << "One MNIST image is decomposed into = " << c_ims_prime.size() << " ciphertexts"
               << "\n";
 
+    std::cout << "Flattening 7 ciphertexts into only 1" << std::endl;
+
+    // Flatten(manually)
+    auto c_im_he = c_ims_prime[0];
+    seal::Ciphertext tmp;
+    for (size_t i = 1; i < c_ims_prime.size(); i++)
+    {
+        analyst_he_eval.rotate_rows(c_ims_prime[i], -(int)(i * 128), analyst.he_gk, tmp);
+        analyst_he_eval.add_inplace(c_im_he, tmp);
+    }
+    // seal::Ciphertext c_im_he;
+    // HHE.flatten(c_ims_prime, c_im_he, analyst.he_gk);
+
+    // debugging: decrypt and check if the flattened result is correct
     std::cout << "MNIST test image = ";
     client.mnistTestImages.printMat();
-    for (auto c_im_he : c_ims_prime)
-    {
-        auto decrypted_c_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc, *context, 112); // 112 = 784 / 7
-        std::cout << "decrypted image size " << decrypted_c_im.size() << "\n";
-        utils::print_vec(decrypted_c_im, decrypted_c_im.size(), "Decrypted image");
-    }
+    // auto decrypted_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc,
+    //                                            *context, 784);
+    // utils::print_vec(decrypted_im, decrypted_im.size(), "Decrypted image");
+
+    // int debug = 1;
+
+    // for (auto c_im_he : c_ims_prime)
+    // {
+    //     auto decrypted_c_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc, *context, 128); // 112 = 784 / 7
+    //     std::cout << "decrypted image size " << decrypted_c_im.size() << "\n";
+    //     utils::print_vec(decrypted_c_im, decrypted_c_im.size(), "Decrypted image");
+    // }
     // function to decompose many images
     // pastahelper::decomposition(HHE, client.c_k, client.c_ims, csp.c_prime, config::USE_BATCH);
 
