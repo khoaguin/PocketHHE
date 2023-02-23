@@ -19,7 +19,7 @@ struct Client
     std::vector<uint64_t> k;           // the secret symmetric keys
     std::vector<seal::Ciphertext> c_k; // the HE encrypted symmetric keys
     // the plaintext data
-    pktnn::pktmat mnistTestImages; // the plaintext test images
+    pktnn::pktmat mnistTestData;   // the plaintext test images
     pktnn::pktmat mnistTestLabels; // the plaintext test labels
     // the encrypted data
     std::vector<std::vector<uint64_t>> c_ims; // the symmetric encrypted images
@@ -143,7 +143,10 @@ int hhe_pktnn_mnist_inference()
     std::cout << "Number of loaded test images = " << mnistTestImages.rows() << "\n";
     std::cout << "Each image is flattened into a vector of size: " << mnistTestImages.cols() << " (=28x28)"
               << "\n";
-    client.mnistTestImages = mnistTestImages;
+    std::cout << ""
+              << "\n";
+    mnistTestImages.printShape();
+    client.mnistTestData = mnistTestImages;
     client.mnistTestLabels = mnistTestLabels;
 
     utils::print_line(__LINE__);
@@ -171,11 +174,11 @@ int hhe_pktnn_mnist_inference()
     utils::print_line(__LINE__);
     std::cout << "Client encrypts his MNIST images using the symmetric key" << std::endl;
     pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
-    client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.mnistTestImages); // the symmetric encrypted images
+    client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.mnistTestData); // the symmetric encrypted images
     std::cout << "Number of encrypted images = " << client.c_ims.size() << "\n";
     if (config::verbose)
     {
-        client.mnistTestImages.printMat();
+        client.mnistTestData.printMat();
         for (auto i : client.c_ims)
         {
             utils::print_vec(i, i.size(), "Encrypted image ");
@@ -197,6 +200,16 @@ int hhe_pktnn_mnist_inference()
     seal::KeyGenerator csp_keygen(*context);
     csp.he_sk = csp_keygen.secret_key();
 
+    std::cout << "Testing max and min values on plaintext of the linear layer"
+              << "\n";
+    pktnn::pktmat result;
+    pktnn::pktmat weight_t_row;
+    weight_t_row.sliceOf(weight_t, 0, 0, 0, 783);
+    weight_t_row.printShape();
+    result.matElemMulMat(weight_t_row, client.mnistTestData);
+    std::cout << "Max value = " << result.getRowMax(0) << std::endl;
+    std::cout << "Min value = " << result.getRowMin(0) << std::endl;
+
     // inspect if the csp 's HE secret key is different than the analyst' s HE secret
     // very long outputs => comment each line at a time to compare the output
     // csp.he_sk.save(std::cout);
@@ -204,34 +217,62 @@ int hhe_pktnn_mnist_inference()
     // analyst.he_sk.save(std::cout);
     // std::cout << "\n";
 
-    utils::print_line(__LINE__);
-    std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
-    pasta::PASTA_SEAL HHE(context, analyst.he_pk, csp.he_sk, analyst.he_rk, analyst.he_gk);
+    // utils::print_line(__LINE__);
+    // std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
+    // pasta::PASTA_SEAL HHE(context, analyst.he_pk, csp.he_sk, analyst.he_rk, analyst.he_gk);
+    // int N = 784; // 28x28
+    // size_t rem = N % HHE.get_plain_size();
+    // size_t num_block = N / HHE.get_plain_size();
+    // if (rem)
+    //     num_block++;
+    // std::cout << "Remainder = " << rem << "\n";
+    // std::cout << "Number of blocks = " << num_block << "\n";
+    // std::vector<int> flatten_gks;
+    // for (int i = 1; i < num_block; i++)
+    //     flatten_gks.push_back(-(int)(i * HHE.get_plain_size()));
+    // utils::print_vec(flatten_gks, flatten_gks.size(), "Flatten gks");
+
+    // cipher.activate_bsgs(use_bsgs);
+    // cipher.add_gk_indices();
+    // cipher.add_some_gk_indices(flatten_gks);
+    // if (use_bsgs)
+    //     cipher.add_bsgs_indices(bsgs_n1, bsgs_n2);
+    // else
+    //     cipher.add_diagonal_indices(N);
+    // cipher.create_gk();
 
     /*
     decomposing only 1 image
     c_ims_prime will be the HE encrypted images of client.mnistTestLabels
     */
-    std::vector<seal::Ciphertext> c_ims_prime = HHE.decomposition(client.c_ims[0], client.c_k, config::USE_BATCH);
-    std::cout << "One MNIST image is decomposed into = " << c_ims_prime.size() << " ciphertexts"
-              << "\n";
+    // std::vector<seal::Ciphertext> c_ims_prime = HHE.decomposition(client.c_ims[0], client.c_k, config::USE_BATCH);
+    // std::cout << "One MNIST image is decomposed into = " << c_ims_prime.size() << " ciphertexts"
+    //           << "\n";
 
-    std::cout << "Flattening 7 ciphertexts into only 1" << std::endl;
+    // utils::print_line(__LINE__);
+    // std::cout << "Decomposition post processing (masking and flatenning)" << std::endl;
+    // if (rem != 0)
+    // {
+    //     std::vector<uint64_t> mask(rem, 1);
+    //     HHE.mask(c_ims_prime.back(), mask);
+    //     utils::print_vec(mask, mask.size(), "Mask");
+    // }
 
+    // std::cout << "Flattening 7 ciphertexts into only 1" << std::endl;
     // Flatten(manually)
-    auto c_im_he = c_ims_prime[0];
-    seal::Ciphertext tmp;
-    for (size_t i = 1; i < c_ims_prime.size(); i++)
-    {
-        analyst_he_eval.rotate_rows(c_ims_prime[i], -(int)(i * 128), analyst.he_gk, tmp);
-        analyst_he_eval.add_inplace(c_im_he, tmp);
-    }
+    // auto c_im_he = c_ims_prime[0];
+    // seal::Ciphertext tmp;
+    // for (size_t i = 1; i < c_ims_prime.size(); i++)
+    // {
+    //     analyst_he_eval.rotate_rows(c_ims_prime[i], -(int)(i * 128), analyst.he_gk, tmp);
+    //     analyst_he_eval.add_inplace(c_im_he, tmp);
+    // }
     // seal::Ciphertext c_im_he;
     // HHE.flatten(c_ims_prime, c_im_he, analyst.he_gk);
 
     // debugging: decrypt and check if the flattened result is correct
-    std::cout << "MNIST test image = ";
-    client.mnistTestImages.printMat();
+    // std::cout << "MNIST test image = ";
+    // client.mnistTestData.printMat();
     // auto decrypted_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc,
     //                                            *context, 784);
     // utils::print_vec(decrypted_im, decrypted_im.size(), "Decrypted image");

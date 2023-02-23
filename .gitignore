@@ -354,3 +354,5 @@ MigrationBackup/
 **scratch**
 
 /build
+
+*.ipynb_checkpoints

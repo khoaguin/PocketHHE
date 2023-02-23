@@ -6,7 +6,7 @@ namespace config
     bool debugging = false;
     bool verbose = false;
     // HE parameters
-    uint64_t plain_mod = 65537;
+    uint64_t plain_mod = 65537; // 2^16 + 1
     uint64_t mod_degree = 16384;
     int seclevel = 128;
     bool use_bsgs = false;

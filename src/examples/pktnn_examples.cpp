@@ -1,6 +1,7 @@
 #include "pktnn_examples.h"
 
-int fc_int_bp_simple() {
+int fc_int_bp_simple()
+{
     utils::print_example_banner("PocketNN: Simple training with dummy data using backpropagation");
 
     // constructing the neural net
@@ -19,7 +20,7 @@ int fc_int_bp_simple() {
     // initialize the weights and biases
     fc1.useDfa(false).initHeWeightBias().setActv(pktnn::pktactv::Actv::pocket_tanh).setNextLayer(fc2);
     fc2.useDfa(false).initHeWeightBias().setActv(pktnn::pktactv::Actv::as_is).setPrevLayer(fc1);
-    
+
     std::cout << "--- Weights after initialization --- \n";
     fc1.printWeight(std::cout);
     // fc2.printWeight(std::cout);
@@ -35,7 +36,8 @@ int fc_int_bp_simple() {
     std::cout << "y = " << y << "\n";
 
     std::cout << "--- Training --- \n";
-    for (int i = 0; i < numEpochs; ++i) {
+    for (int i = 0; i < numEpochs; ++i)
+    {
         fc1.forward(x);
         fc2.forward(fc1);
 
@@ -49,7 +51,7 @@ int fc_int_bp_simple() {
 
         fc2.backward(lossDeltaMat, 1e5);
     }
-    
+
     std::cout << "--- Weights after training --- \n";
     fc1.printWeight(std::cout);
     // fc2.printWeight(std::cout);
@@ -57,7 +59,8 @@ int fc_int_bp_simple() {
     return 0;
 };
 
-int fc_int_dfa_mnist() {
+int fc_int_dfa_mnist()
+{
     utils::print_example_banner("PocketNN: Training on MNIST using direct feedback alignment with a 3-layer FC network");
 
     // Loading the MNIST dataset
@@ -72,8 +75,8 @@ int fc_int_dfa_mnist() {
 
     pktnn::pktloader::loadMnistImages(mnistTrainImages, numTrainSamples, true); // numTrainSamples x (28*28)
     pktnn::pktloader::loadMnistLabels(mnistTrainLabels, numTrainSamples, true); // numTrainSamples x 1
-    pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false); // numTestSamples x (28*28)
-    pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false); // numTestSamples x 1
+    pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false);  // numTestSamples x (28*28)
+    pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false);  // numTestSamples x 1
     std::cout << "Loaded train images: " << mnistTrainImages.rows() << ".\nLoaded test images: " << mnistTestImages.rows() << "\n";
 
     // Defining the network
@@ -85,30 +88,36 @@ int fc_int_dfa_mnist() {
     fc1.useDfa(true).setActv(a).setNextLayer(fc2);
     fc2.useDfa(true).setActv(a).setNextLayer(fcLast);
     fcLast.useDfa(true).setActv(a);
-    
+
     // Initial stats before training
     pktnn::pktmat trainTargetMat(numTrainSamples, config::num_classes);
     pktnn::pktmat testTargetMat(numTestSamples, config::num_classes);
 
     int numCorrect = 0;
     fc1.forward(mnistTrainImages);
-    for (int r = 0; r < numTrainSamples; ++r) {
+    for (int r = 0; r < numTrainSamples; ++r)
+    {
         trainTargetMat.setElem(r, mnistTrainLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
-        if (trainTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+        if (trainTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
-    std::cout << "Initial training numCorrect: " << numCorrect << " / 60000" << "\n";
+    std::cout << "Initial training numCorrect: " << numCorrect << " / 60000"
+              << "\n";
 
     numCorrect = 0;
     fc1.forward(mnistTestImages);
-    for (int r = 0; r < numTestSamples; ++r) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
         testTargetMat.setElem(r, mnistTestLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
-        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
-    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000" << "\n";
+    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000"
+              << "\n";
 
     // Training
     std::cout << "----- Start training -----\n";
@@ -121,29 +130,30 @@ int fc_int_dfa_mnist() {
     int epoch = 3;
     int miniBatchSize = 20; // CAUTION: Too big minibatch size can cause overflow
     int lrInv = 1000;
-    std::cout << "Learning Rate Inverse = " << lrInv <<
-        ", numTrainSamples = " << numTrainSamples <<
-        ", miniBatchSize = " << miniBatchSize <<
-        ", numEpochs = " << epoch << "\n";
+    std::cout << "Learning Rate Inverse = " << lrInv << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = " << miniBatchSize << ", numEpochs = " << epoch << "\n";
 
     // random indices template
-    int* indices = new int[numTrainSamples];
-    for (int i = 0; i < numTrainSamples; ++i) {
+    int *indices = new int[numTrainSamples];
+    for (int i = 0; i < numTrainSamples; ++i)
+    {
         indices[i] = i;
     }
 
     std::string testCorrect = "";
     std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
-    for (int e = 1; e <= epoch; ++e) {
+    for (int e = 1; e <= epoch; ++e)
+    {
         // Shuffle the indices
-        for (int i = numTrainSamples - 1; i > 0; --i) {
+        for (int i = numTrainSamples - 1; i > 0; --i)
+        {
             int j = rand() % (i + 1); // Pick a random index from 0 to r
             int temp = indices[j];
             indices[j] = indices[i];
             indices[i] = temp;
         }
 
-        if ((e % 10 == 0) && (lrInv < 2 * lrInv)) {
+        if ((e % 10 == 0) && (lrInv < 2 * lrInv))
+        {
             // reducing the learning rate by a half every 5 epochs
             // avoid overflow
             lrInv *= 2;
@@ -154,7 +164,8 @@ int fc_int_dfa_mnist() {
         int epochNumCorrect = 0;
         int numIter = numTrainSamples / miniBatchSize;
 
-        for (int i = 0; i < numIter; ++i) {
+        for (int i = 0; i < numIter; ++i)
+        {
             int batchNumCorrect = 0;
             const int idxStart = i * miniBatchSize;
             const int idxEnd = idxStart + miniBatchSize;
@@ -167,8 +178,10 @@ int fc_int_dfa_mnist() {
             sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, fcLast.mOutput);
             sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, fcLast.mOutput);
 
-            for (int r = 0; r < miniBatchSize; ++r) {
-                if (miniBatchTrainTargets.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+            for (int r = 0; r < miniBatchSize; ++r)
+            {
+                if (miniBatchTrainTargets.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+                {
                     ++batchNumCorrect;
                 }
             }
@@ -180,8 +193,10 @@ int fc_int_dfa_mnist() {
         // check the test set accuracy
         fc1.forward(mnistTestImages);
         int testNumCorrect = 0;
-        for (int r = 0; r < numTestSamples; ++r) {
-            if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+        for (int r = 0; r < numTestSamples; ++r)
+        {
+            if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+            {
                 ++testNumCorrect;
             }
         }
@@ -190,8 +205,10 @@ int fc_int_dfa_mnist() {
 
     fc1.forward(mnistTrainImages);
     numCorrect = 0;
-    for (int r = 0; r < numTrainSamples; ++r) {
-        if (trainTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+    for (int r = 0; r < numTrainSamples; ++r)
+    {
+        if (trainTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
@@ -200,11 +217,13 @@ int fc_int_dfa_mnist() {
     // fcLast.printWeight(std::cout);
     // fcLast.printBias(std::cout);
 
-    std::cout << "----- Test -----\n";     
+    std::cout << "----- Test -----\n";
     fc1.forward(mnistTestImages);
     numCorrect = 0;
-    for (int r = 0; r < numTestSamples; ++r) {
-        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
+        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
@@ -223,11 +242,12 @@ int fc_int_dfa_mnist() {
     // fcLast.saveBias("weights/3_layer/fcLast_bias.csv");
 
     delete[] indices;
-    
+
     return 0;
 };
 
-int fc_int_dfa_mnist_inference() {
+int fc_int_dfa_mnist_inference()
+{
     utils::print_example_banner("PocketNN: Inference on MNIST using pretrained weights");
     std::cout << "----- Constructing the network -----\n";
     int numClasses = 10;
@@ -259,13 +279,16 @@ int fc_int_dfa_mnist_inference() {
     pktnn::pktmat testTargetMat(numTestSamples, numClasses);
     int numCorrect = 0;
     fc1.forward(mnistTestImages);
-    for (int r = 0; r < numTestSamples; ++r) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
         testTargetMat.setElem(r, mnistTestLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
-        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
-    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000" << "\n";
+    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000"
+              << "\n";
     std::cout << "Initial test accuracy = " << (numCorrect * 1.0 / numTestSamples) << "\n";
     // testTargetMat.printMat(std::cout);
 
@@ -293,8 +316,10 @@ int fc_int_dfa_mnist_inference() {
     // pktnn::pktmat testTargetMat(numTestSamples, numClasses);
     fc1.forward(mnistTestImages);
     int testCorrect = 0;
-    for (int r = 0; r < numTestSamples; ++r) {
-        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r))) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
+        if (testTargetMat.getMaxIndexInRow(r) == fcLast.mOutput.getMaxIndexInRow((r)))
+        {
             ++testCorrect;
         }
     }
@@ -304,7 +329,8 @@ int fc_int_dfa_mnist_inference() {
     return 0;
 }
 
-int fc_int_dfa_mnist_one_layer() {
+int fc_int_dfa_mnist_one_layer()
+{
     utils::print_example_banner("PocketNN: Training on MNIST using direct feedback alignment with a 1-layer FC network");
 
     // Loading the MNIST dataset
@@ -319,8 +345,8 @@ int fc_int_dfa_mnist_one_layer() {
 
     pktnn::pktloader::loadMnistImages(mnistTrainImages, numTrainSamples, true); // numTrainSamples x (28*28)
     pktnn::pktloader::loadMnistLabels(mnistTrainLabels, numTrainSamples, true); // numTrainSamples x 1
-    pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false); // numTestSamples x (28*28)
-    pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false); // numTestSamples x 1
+    pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false);  // numTestSamples x (28*28)
+    pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false);  // numTestSamples x 1
     std::cout << "Loaded train images: " << mnistTrainImages.rows() << ".\nLoaded test images: " << mnistTestImages.rows() << "\n";
 
     // Defining the network
@@ -335,23 +361,29 @@ int fc_int_dfa_mnist_one_layer() {
 
     int numCorrect = 0;
     fc1.forward(mnistTrainImages);
-    for (int r = 0; r < numTrainSamples; ++r) {
+    for (int r = 0; r < numTrainSamples; ++r)
+    {
         trainTargetMat.setElem(r, mnistTrainLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
-        if (trainTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+        if (trainTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
-    std::cout << "Initial training numCorrect: " << numCorrect << " / 60000" << "\n";
+    std::cout << "Initial training numCorrect: " << numCorrect << " / 60000"
+              << "\n";
 
     numCorrect = 0;
     fc1.forward(mnistTestImages);
-    for (int r = 0; r < numTestSamples; ++r) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
         testTargetMat.setElem(r, mnistTestLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
-        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
-    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000" << "\n";
+    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000"
+              << "\n";
 
     // Training
     std::cout << "----- Start training -----\n";
@@ -361,29 +393,30 @@ int fc_int_dfa_mnist_one_layer() {
     pktnn::pktmat miniBatchImages;
     pktnn::pktmat miniBatchTrainTargets;
 
-    std::cout << "Learning Rate Inverse = " << config::lr_inv <<
-        ", numTrainSamples = " << numTrainSamples <<
-        ", miniBatchSize = " << config::mini_batch_size <<
-        ", numEpochs = " << config::epoch << "\n";
+    std::cout << "Learning Rate Inverse = " << config::lr_inv << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = " << config::mini_batch_size << ", numEpochs = " << config::epoch << "\n";
 
     // random indices template
-    int* indices = new int[numTrainSamples];
-    for (int i = 0; i < numTrainSamples; ++i) {
+    int *indices = new int[numTrainSamples];
+    for (int i = 0; i < numTrainSamples; ++i)
+    {
         indices[i] = i;
     }
 
     std::string testCorrect = "";
     std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
-    for (int e = 1; e <= config::epoch; ++e) {
+    for (int e = 1; e <= config::epoch; ++e)
+    {
         // Shuffle the indices
-        for (int i = numTrainSamples - 1; i > 0; --i) {
+        for (int i = numTrainSamples - 1; i > 0; --i)
+        {
             int j = rand() % (i + 1); // Pick a random index from 0 to r
             int temp = indices[j];
             indices[j] = indices[i];
             indices[i] = temp;
         }
 
-        if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv)) {
+        if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv))
+        {
             // reducing the learning rate by a half every 5 epochs
             // avoid overflow
             config::lr_inv *= 2;
@@ -394,7 +427,8 @@ int fc_int_dfa_mnist_one_layer() {
         int epochNumCorrect = 0;
         int numIter = numTrainSamples / config::mini_batch_size;
 
-        for (int i = 0; i < numIter; ++i) {
+        for (int i = 0; i < numIter; ++i)
+        {
             int batchNumCorrect = 0;
             const int idxStart = i * config::mini_batch_size;
             const int idxEnd = idxStart + config::mini_batch_size;
@@ -407,8 +441,10 @@ int fc_int_dfa_mnist_one_layer() {
             sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, fc1.mOutput);
             sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, fc1.mOutput);
 
-            for (int r = 0; r < config::mini_batch_size; ++r) {
-                if (miniBatchTrainTargets.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+            for (int r = 0; r < config::mini_batch_size; ++r)
+            {
+                if (miniBatchTrainTargets.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+                {
                     ++batchNumCorrect;
                 }
             }
@@ -420,8 +456,10 @@ int fc_int_dfa_mnist_one_layer() {
         // check the test set accuracy
         fc1.forward(mnistTestImages);
         int testNumCorrect = 0;
-        for (int r = 0; r < numTestSamples; ++r) {
-            if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+        for (int r = 0; r < numTestSamples; ++r)
+        {
+            if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+            {
                 ++testNumCorrect;
             }
         }
@@ -430,18 +468,22 @@ int fc_int_dfa_mnist_one_layer() {
 
     fc1.forward(mnistTrainImages);
     numCorrect = 0;
-    for (int r = 0; r < numTrainSamples; ++r) {
-        if (trainTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+    for (int r = 0; r < numTrainSamples; ++r)
+    {
+        if (trainTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
     std::cout << "Final training numCorrect = " << numCorrect << "\n";
 
-    std::cout << "----- Test -----\n";     
+    std::cout << "----- Test -----\n";
     fc1.forward(mnistTestImages);
     numCorrect = 0;
-    for (int r = 0; r < numTestSamples; ++r) {
-        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
+        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
@@ -460,7 +502,8 @@ int fc_int_dfa_mnist_one_layer() {
     return 0;
 }
 
-int fc_int_dfa_mnist_one_layer_inference() {
+int fc_int_dfa_mnist_one_layer_inference()
+{
     utils::print_example_banner("PocketNN: Inference on MNIST using pretrained weights for the 1-layer network");
     std::cout << "----- Constructing the network -----\n";
     pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_tanh;
@@ -481,13 +524,16 @@ int fc_int_dfa_mnist_one_layer_inference() {
     pktnn::pktmat testTargetMat(numTestSamples, config::num_classes);
     int numCorrect = 0;
     fc1.forward(mnistTestImages);
-    for (int r = 0; r < numTestSamples; ++r) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
         testTargetMat.setElem(r, mnistTestLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
-        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+        {
             ++numCorrect;
         }
     }
-    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000" << "\n";
+    std::cout << "Initial test numCorrect: " << numCorrect << " / 10000"
+              << "\n";
     std::cout << "Initial test accuracy = " << (numCorrect * 1.0 / numTestSamples) << "\n";
     // testTargetMat.printMat(std::cout);
 
@@ -500,13 +546,32 @@ int fc_int_dfa_mnist_one_layer_inference() {
     std::cout << "----- Test -----\n";
     fc1.forward(mnistTestImages);
     int testCorrect = 0;
-    for (int r = 0; r < numTestSamples; ++r) {
-        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r))) {
+    for (int r = 0; r < numTestSamples; ++r)
+    {
+        if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+        {
             ++testCorrect;
         }
     }
     std::cout << "Final test numCorrect = " << testCorrect << "\n";
     std::cout << "Final test accuracy = " << (testCorrect * 1.0 / numTestSamples) << "\n";
+
+    return 0;
+}
+
+int fc_int_dfa_ecg_one_layer()
+{
+    utils::print_example_banner("PocketNN: Training on MIT-BIH using direct feedback alignment with a 1-layer FC network");
+
+    // Loading the ECG dataset
+    std::cout << "----- Loading MIT-BIH ECG data ----- \n";
+    int numTrainSamples = 13245;
+    int numTestSamples = 13245;
+
+    pktnn::pktmat ecgTrainLabels;
+    pktnn::pktmat ecgTrainInput;
+    pktnn::pktmat ecgTestLabels;
+    pktnn::pktmat ecgTestInput;
 
     return 0;
 }

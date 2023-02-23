@@ -15,3 +15,4 @@ int fc_int_dfa_mnist();
 int fc_int_dfa_mnist_inference();
 int fc_int_dfa_mnist_one_layer();
 int fc_int_dfa_mnist_one_layer_inference();
+int fc_int_dfa_ecg_one_layer();
