@@ -24,10 +24,15 @@ namespace pktnn
         static void parseDatasetDiabetes(pktmat &saveToMat, std::string fileName);
         static int reverseInt(int i);
         static pktmat3d **loadMnistImages(int numImagesToLoad);
+        // load the MNIST dataset
         static void loadMnistImages(pktmat &images, int numImagesToLoad, bool isTrain, bool debugging = false);
         static void loadMnistLabels(pktmat &labels, int numLabelsToLoad, bool isTrain, bool debugging = false);
+        // load the FashionMNIST dataset
         static void loadFashionMnistImages(pktmat &images, int numImagesToLoad, bool isTrain);
         static void loadFashionMnistLabels(pktmat &labels, int numLabelsToLoad, bool isTrain);
+        // load the MIT-BIH dataset
+        static void loadEcgData(pktmat &dataMat, int numExamplesToLoad, bool isTrain, bool debugging = false);
+        static void loadEcgLabels(pktmat &labels, int numLabelsToLoad, bool isTrain, bool debugging = false);
     };
 
     // extern "C" {

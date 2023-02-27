@@ -425,3 +425,79 @@ void pktnn::pktloader::loadFashionMnistLabels(pktmat &labels, int numLabelsToLoa
         std::cout << "Failed to load the label dataset.\n";
     }
 }
+
+void pktnn::pktloader::loadEcgData(pktmat &dataMat, int numExamplesToLoad, bool isTrain, bool debugging)
+{
+    std::string fileName;
+    if (isTrain)
+    {
+        if (debugging)
+        {
+            fileName = "../data/mit-bih/csv/mitbih_x_train_int.csv";
+        }
+        else
+        {
+            fileName = "data/mit-bih/csv/mitbih_x_train_int.csv";
+        }
+    }
+    else
+    {
+        if (debugging)
+        {
+            fileName = "../data/mit-bih/csv/mitbih_x_test_int.csv";
+        }
+        else
+        {
+            fileName = "data/mit-bih/csv/mitbih_x_test_int.csv";
+        }
+    }
+
+    std::ifstream file(fileName, std::ios::binary);
+    if (file.is_open())
+    {
+        std::cout << "Loading " << fileName << "\n";
+        dataMat.readFromCSV(fileName);
+    }
+    else
+    {
+        std::cout << "Dataset is not loaded properly.\n";
+    }
+}
+
+void pktnn::pktloader::loadEcgLabels(pktmat &dataMat, int numExamplesToLoad, bool isTrain, bool debugging)
+{
+    std::string fileName;
+    if (isTrain)
+    {
+        if (debugging)
+        {
+            fileName = "../data/mit-bih/csv/mitbih_binary_y_train.csv";
+        }
+        else
+        {
+            fileName = "data/mit-bih/csv/mitbih_binary_y_train.csv";
+        }
+    }
+    else
+    {
+        if (debugging)
+        {
+            fileName = "../data/mit-bih/csv/mitbih_binary_y_test.csv";
+        }
+        else
+        {
+            fileName = "data/mit-bih/csv/mitbih_binary_y_test.csv";
+        }
+    }
+
+    std::ifstream file(fileName, std::ios::binary);
+    if (file.is_open())
+    {
+        std::cout << "Loading " << fileName << "\n";
+        dataMat.readFromCSV(fileName);
+    }
+    else
+    {
+        std::cout << "Dataset is not loaded properly.\n";
+    }
+}

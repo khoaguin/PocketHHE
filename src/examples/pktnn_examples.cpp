@@ -568,10 +568,58 @@ int fc_int_dfa_ecg_one_layer()
     int numTrainSamples = 13245;
     int numTestSamples = 13245;
 
-    pktnn::pktmat ecgTrainLabels;
-    pktnn::pktmat ecgTrainInput;
-    pktnn::pktmat ecgTestLabels;
-    pktnn::pktmat ecgTestInput;
+    pktnn::pktmat ecgTrainLabels(numTrainSamples, 1);
+    pktnn::pktmat ecgTrainInput(numTrainSamples, 128);
+    pktnn::pktmat ecgTestLabels(numTestSamples, 1);
+    pktnn::pktmat ecgTestInput(numTestSamples, 128);
+
+    pktnn::pktloader::loadEcgData(ecgTrainInput, numTrainSamples, true, config::debugging);
+    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, numTrainSamples, true, config::debugging);
+    pktnn::pktloader::loadEcgData(ecgTestInput, numTestSamples, false, config::debugging);
+    pktnn::pktloader::loadEcgLabels(ecgTestLabels, numTestSamples, false, config::debugging);
+
+    ecgTrainInput.printShape();
+    ecgTrainLabels.printShape();
+    ecgTestInput.printShape();
+    ecgTestLabels.printShape();
+
+    // Defining the network
+    std::cout << "----- Defining the neural net ----- \n";
+    pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_sigmoid;
+    pktnn::pktfc fc1(128, 1);
+    fc1.useDfa(true).setActv(a);
+
+    // Initial stats before training
+    // pktnn::pktmat trainTargetMat(numTrainSamples, 1);
+    // pktnn::pktmat testTargetMat(numTestSamples, 1);
+
+    int numCorrect = 0;
+    fc1.forward(ecgTrainInput);
+    for (int r = 0; r < numTrainSamples; ++r)
+    {
+        int output_row_r = 0;
+        fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+        if (ecgTrainLabels.getElem(r, 0) == output_row_r)
+        {
+            ++numCorrect;
+        }
+    }
+    std::cout << "Initial training numCorrect: " << numCorrect << " / " << numTrainSamples
+              << "\n";
+
+    numCorrect = 0;
+    fc1.forward(ecgTestInput);
+    for (int r = 0; r < numTestSamples; ++r)
+    {
+        int output_row_r = 0;
+        fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+        if (ecgTestLabels.getElem(r, 0) == output_row_r)
+        {
+            ++numCorrect;
+        }
+    }
+    std::cout << "Initial test numCorrect: " << numCorrect << " / " << numTestSamples
+              << "\n";
 
     return 0;
 }
