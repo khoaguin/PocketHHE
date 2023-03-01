@@ -574,13 +574,12 @@ int fc_int_dfa_ecg_one_layer()
     pktnn::pktmat ecgTestInput(numTestSamples, 128);
 
     pktnn::pktloader::loadEcgData(ecgTrainInput, numTrainSamples, true, config::debugging);
-    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, numTrainSamples, true, config::debugging);
-    pktnn::pktloader::loadEcgData(ecgTestInput, numTestSamples, false, config::debugging);
-    pktnn::pktloader::loadEcgLabels(ecgTestLabels, numTestSamples, false, config::debugging);
-
     ecgTrainInput.printShape();
+    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, numTrainSamples, true, config::debugging);
     ecgTrainLabels.printShape();
+    pktnn::pktloader::loadEcgData(ecgTestInput, numTestSamples, false, config::debugging);
     ecgTestInput.printShape();
+    pktnn::pktloader::loadEcgLabels(ecgTestLabels, numTestSamples, false, config::debugging);
     ecgTestLabels.printShape();
 
     // Defining the network
@@ -589,10 +588,10 @@ int fc_int_dfa_ecg_one_layer()
     pktnn::pktfc fc1(128, 1);
     fc1.useDfa(true).setActv(a);
 
-    // Initial stats before training
-    // pktnn::pktmat trainTargetMat(numTrainSamples, 1);
-    // pktnn::pktmat testTargetMat(numTestSamples, 1);
+    // fc1.printWeight(std::cout);
+    // fc1.printBias(std::cout);
 
+    // Initial stats before training
     int numCorrect = 0;
     fc1.forward(ecgTrainInput);
     for (int r = 0; r < numTrainSamples; ++r)
@@ -620,6 +619,99 @@ int fc_int_dfa_ecg_one_layer()
     }
     std::cout << "Initial test numCorrect: " << numCorrect << " / " << numTestSamples
               << "\n";
+
+    // Training
+    std::cout << "----- Start training -----\n";
+    pktnn::pktmat lossMat;
+    pktnn::pktmat lossDeltaMat;
+    pktnn::pktmat batchLossDeltaMat;
+    pktnn::pktmat miniBatchInput;
+    pktnn::pktmat miniBatchTrainTargets;
+
+    std::cout << "Learning Rate Inverse = " << config::lr_inv << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = " << config::mini_batch_size << ", numEpochs = " << config::epoch << "\n";
+
+    // random indices template
+    int *indices = new int[numTrainSamples];
+    for (int i = 0; i < numTrainSamples; ++i)
+    {
+        indices[i] = i;
+    }
+
+    std::string testCorrect = "";
+    std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
+    for (int e = 1; e <= config::epoch; ++e)
+    {
+        // Shuffle the indices
+        for (int i = numTrainSamples - 1; i > 0; --i)
+        {
+            int j = rand() % (i + 1); // Pick a random index from 0 to r
+            int temp = indices[j];
+            indices[j] = indices[i];
+            indices[i] = temp;
+        }
+
+        if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv))
+        {
+            // reducing the learning rate by a half every 5 epochs
+            // avoid overflow
+            config::lr_inv *= 2;
+        }
+
+        int sumLoss = 0;
+        int sumLossDelta = 0;
+        int epochNumCorrect = 0;
+        int numIter = numTrainSamples / config::mini_batch_size;
+
+        for (int i = 0; i < numIter; ++i)
+        {
+            int batchNumCorrect = 0;
+            const int idxStart = i * config::mini_batch_size;
+            const int idxEnd = idxStart + config::mini_batch_size;
+            miniBatchInput.indexedSlicedSamplesOf(ecgTrainInput, indices, idxStart, idxEnd);
+            miniBatchTrainTargets.indexedSlicedSamplesOf(ecgTrainLabels, indices, idxStart, idxEnd);
+
+            // miniBatchImages.printMat(std::cout); // print out the input data
+
+            fc1.forward(miniBatchInput);
+            sumLoss += pktnn::pktloss::batchCrossEntropyLoss(lossMat, miniBatchTrainTargets, fc1.mOutput);
+            sumLossDelta = pktnn::pktloss::batchCrossEntropyLossDelta(lossDeltaMat, miniBatchTrainTargets, fc1.mOutput);
+
+            for (int r = 0; r < config::mini_batch_size; ++r)
+            {
+                int output_row_r = 0;
+                fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+                // std::cout << fc1.mOutput.getElem(r, 0) << "----" << output_row_r << " ";
+                if (miniBatchTrainTargets.getElem(r, 0) == output_row_r)
+                {
+                    ++batchNumCorrect;
+                }
+            }
+            fc1.backward(lossDeltaMat, config::lr_inv);
+            epochNumCorrect += batchNumCorrect;
+        }
+        std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << (epochNumCorrect * 1.0 / numTrainSamples) << "\n";
+
+        // check the test set accuracy
+        fc1.forward(ecgTestInput);
+        int testNumCorrect = 0;
+        for (int r = 0; r < numTestSamples; ++r)
+        {
+            int output_row_r = 0;
+            fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+
+            if (ecgTestLabels.getElem(r, 0) == output_row_r)
+            {
+                ++testNumCorrect;
+            }
+        }
+        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + "\n");
+    }
+    std::cout << "Epoch | NumCorrect\n";
+    std::cout << testCorrect;
+    fc1.mOutput.printMat(std::cout);
+
+    // fc1.printWeight(std::cout);
+    // fc1.printBias(std::cout);
 
     return 0;
 }

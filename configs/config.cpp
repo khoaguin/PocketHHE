@@ -20,7 +20,7 @@ namespace config
     int dim_input = mnist_rows * mnist_cols;
     int dim_layer1 = 100;
     int dim_layer2 = 50;
-    int epoch = 50;
+    int epoch = 1000;
     int mini_batch_size = 20; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 1000;
     // Parameters to run experiments
