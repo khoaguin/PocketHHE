@@ -31,8 +31,8 @@ namespace pktnn
         static void loadFashionMnistImages(pktmat &images, int numImagesToLoad, bool isTrain);
         static void loadFashionMnistLabels(pktmat &labels, int numLabelsToLoad, bool isTrain);
         // load the MIT-BIH dataset
-        static void loadEcgData(pktmat &dataMat, int numExamplesToLoad, bool isTrain, bool debugging = false);
-        static void loadEcgLabels(pktmat &labels, int numLabelsToLoad, bool isTrain, bool debugging = false);
+        static void loadEcgData(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging = false);
+        static void loadEcgLabels(pktmat &labels, std::string filename, int numLabelsToLoad, bool debugging = false);
     };
 
     // extern "C" {

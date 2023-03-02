@@ -565,21 +565,27 @@ int fc_int_dfa_ecg_one_layer()
 
     // Loading the ECG dataset
     std::cout << "----- Loading MIT-BIH ECG data ----- \n";
-    int numTrainSamples = 13245;
-    int numTestSamples = 13245;
+    int numTrainSamples = 6000;
+    int numTestSamples = 6000;
 
     pktnn::pktmat ecgTrainLabels(numTrainSamples, 1);
     pktnn::pktmat ecgTrainInput(numTrainSamples, 128);
     pktnn::pktmat ecgTestLabels(numTestSamples, 1);
     pktnn::pktmat ecgTestInput(numTestSamples, 128);
 
-    pktnn::pktloader::loadEcgData(ecgTrainInput, numTrainSamples, true, config::debugging);
+    pktnn::pktloader::loadEcgData(ecgTrainInput, "data/mit-bih/csv/mitbih_balanced_x_train_int.csv",
+                                  numTrainSamples, config::debugging);
     ecgTrainInput.printShape();
-    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, numTrainSamples, true, config::debugging);
+    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, "data/mit-bih/csv/mitbih_balanced_bin_y_train.csv",
+                                    numTrainSamples, config::debugging);
+    ecgTrainLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
     ecgTrainLabels.printShape();
-    pktnn::pktloader::loadEcgData(ecgTestInput, numTestSamples, false, config::debugging);
+    pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_balanced_x_test_int.csv",
+                                  numTestSamples, config::debugging);
     ecgTestInput.printShape();
-    pktnn::pktloader::loadEcgLabels(ecgTestLabels, numTestSamples, false, config::debugging);
+    pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_balanced_bin_y_test.csv",
+                                    numTestSamples, config::debugging);
+    ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
     ecgTestLabels.printShape();
 
     // Defining the network
@@ -588,6 +594,7 @@ int fc_int_dfa_ecg_one_layer()
     pktnn::pktfc fc1(128, 1);
     fc1.useDfa(true).setActv(a);
 
+    // Initialy weights and biases are 0s
     // fc1.printWeight(std::cout);
     // fc1.printBias(std::cout);
 
@@ -670,16 +677,14 @@ int fc_int_dfa_ecg_one_layer()
             miniBatchInput.indexedSlicedSamplesOf(ecgTrainInput, indices, idxStart, idxEnd);
             miniBatchTrainTargets.indexedSlicedSamplesOf(ecgTrainLabels, indices, idxStart, idxEnd);
 
-            // miniBatchImages.printMat(std::cout); // print out the input data
-
             fc1.forward(miniBatchInput);
-            sumLoss += pktnn::pktloss::batchCrossEntropyLoss(lossMat, miniBatchTrainTargets, fc1.mOutput);
-            sumLossDelta = pktnn::pktloss::batchCrossEntropyLossDelta(lossDeltaMat, miniBatchTrainTargets, fc1.mOutput);
+            sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, fc1.mOutput);
+            sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, fc1.mOutput);
 
             for (int r = 0; r < config::mini_batch_size; ++r)
             {
                 int output_row_r = 0;
-                fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+                fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
                 // std::cout << fc1.mOutput.getElem(r, 0) << "----" << output_row_r << " ";
                 if (miniBatchTrainTargets.getElem(r, 0) == output_row_r)
                 {
@@ -697,21 +702,24 @@ int fc_int_dfa_ecg_one_layer()
         for (int r = 0; r < numTestSamples; ++r)
         {
             int output_row_r = 0;
-            fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+            fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
 
             if (ecgTestLabels.getElem(r, 0) == output_row_r)
             {
                 ++testNumCorrect;
             }
         }
-        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + "\n");
+        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(testNumCorrect * 1.0 / numTestSamples)) + "\n";
     }
-    std::cout << "Epoch | NumCorrect\n";
+    std::cout << "Epoch | NumCorrect | TestAccuracy \n";
     std::cout << testCorrect;
-    fc1.mOutput.printMat(std::cout);
 
+    // fc1.mOutput.printMat(std::cout);
     // fc1.printWeight(std::cout);
     // fc1.printBias(std::cout);
+
+    // auto weight = fc1.getWeight();
+    // std::cout << weight.getColMax(0) << " " << weight.getColMin(0) << "\n";
 
     return 0;
 }

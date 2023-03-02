@@ -426,30 +426,17 @@ void pktnn::pktloader::loadFashionMnistLabels(pktmat &labels, int numLabelsToLoa
     }
 }
 
-void pktnn::pktloader::loadEcgData(pktmat &dataMat, int numExamplesToLoad, bool isTrain, bool debugging)
+void pktnn::pktloader::loadEcgData(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging)
 {
     std::string fileName;
-    if (isTrain)
+
+    if (debugging)
     {
-        if (debugging)
-        {
-            fileName = "../data/mit-bih/csv/mitbih_x_train_int.csv";
-        }
-        else
-        {
-            fileName = "data/mit-bih/csv/mitbih_x_train_int.csv";
-        }
+        fileName = "../" + filename;
     }
     else
     {
-        if (debugging)
-        {
-            fileName = "../data/mit-bih/csv/mitbih_x_test_int.csv";
-        }
-        else
-        {
-            fileName = "data/mit-bih/csv/mitbih_x_test_int.csv";
-        }
+        fileName = filename;
     }
 
     std::ifstream file(fileName, std::ios::binary);
@@ -464,30 +451,16 @@ void pktnn::pktloader::loadEcgData(pktmat &dataMat, int numExamplesToLoad, bool 
     }
 }
 
-void pktnn::pktloader::loadEcgLabels(pktmat &dataMat, int numExamplesToLoad, bool isTrain, bool debugging)
+void pktnn::pktloader::loadEcgLabels(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging)
 {
     std::string fileName;
-    if (isTrain)
+    if (debugging)
     {
-        if (debugging)
-        {
-            fileName = "../data/mit-bih/csv/mitbih_binary_y_train.csv";
-        }
-        else
-        {
-            fileName = "data/mit-bih/csv/mitbih_binary_y_train.csv";
-        }
+        fileName = "../" + filename;
     }
     else
     {
-        if (debugging)
-        {
-            fileName = "../data/mit-bih/csv/mitbih_binary_y_test.csv";
-        }
-        else
-        {
-            fileName = "data/mit-bih/csv/mitbih_binary_y_test.csv";
-        }
+        fileName = filename;
     }
 
     std::ifstream file(fileName, std::ios::binary);
