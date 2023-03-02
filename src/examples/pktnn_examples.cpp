@@ -604,7 +604,7 @@ int fc_int_dfa_ecg_one_layer()
     for (int r = 0; r < numTrainSamples; ++r)
     {
         int output_row_r = 0;
-        fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+        fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
         if (ecgTrainLabels.getElem(r, 0) == output_row_r)
         {
             ++numCorrect;
@@ -618,7 +618,7 @@ int fc_int_dfa_ecg_one_layer()
     for (int r = 0; r < numTestSamples; ++r)
     {
         int output_row_r = 0;
-        fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 1 : output_row_r = 0;
+        fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
         if (ecgTestLabels.getElem(r, 0) == output_row_r)
         {
             ++numCorrect;
@@ -715,8 +715,8 @@ int fc_int_dfa_ecg_one_layer()
     std::cout << testCorrect;
 
     // fc1.mOutput.printMat(std::cout);
-    // fc1.printWeight(std::cout);
-    // fc1.printBias(std::cout);
+    fc1.printWeight(std::cout);
+    fc1.printBias(std::cout);
 
     // auto weight = fc1.getWeight();
     // std::cout << weight.getColMax(0) << " " << weight.getColMin(0) << "\n";

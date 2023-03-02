@@ -22,7 +22,7 @@ namespace config
     int dim_layer2 = 50;
     int epoch = 100;
     int mini_batch_size = 64; // CAUTION: Too big minibatch size can cause overflow
-    int lr_inv = 10;
+    int lr_inv = 50;
     // Parameters to run experiments
     // uint64_t NUM_RUN = 50;
     // uint64_t NUM_VEC = 1;
