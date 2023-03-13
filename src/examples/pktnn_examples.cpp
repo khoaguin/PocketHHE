@@ -565,25 +565,26 @@ int fc_int_dfa_ecg_one_layer()
 
     // Loading the ECG dataset
     std::cout << "----- Loading MIT-BIH ECG data ----- \n";
-    int numTrainSamples = 6000;
-    int numTestSamples = 6000;
+    int numTrainSamples = 13245;
+    int numTestSamples = 13245;
 
     pktnn::pktmat ecgTrainLabels(numTrainSamples, 1);
     pktnn::pktmat ecgTrainInput(numTrainSamples, 128);
     pktnn::pktmat ecgTestLabels(numTestSamples, 1);
     pktnn::pktmat ecgTestInput(numTestSamples, 128);
 
-    pktnn::pktloader::loadEcgData(ecgTrainInput, "data/mit-bih/csv/mitbih_balanced_x_train_int.csv",
+    pktnn::pktloader::loadEcgData(ecgTrainInput, "data/mit-bih/csv/mitbih_x_train_int.csv",
                                   numTrainSamples, config::debugging);
     ecgTrainInput.printShape();
-    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, "data/mit-bih/csv/mitbih_balanced_bin_y_train.csv",
+    pktnn::pktloader::loadEcgLabels(ecgTrainLabels, "data/mit-bih/csv/mitbih_bin_y_train.csv",
                                     numTrainSamples, config::debugging);
-    ecgTrainLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
+    ecgTrainLabels.selfMulConst(128); // scale the output from 0-1 to 0-128 due to PocketNN's sigmoid function
     ecgTrainLabels.printShape();
-    pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_balanced_x_test_int.csv",
+
+    pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
                                   numTestSamples, config::debugging);
     ecgTestInput.printShape();
-    pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_balanced_bin_y_test.csv",
+    pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
                                     numTestSamples, config::debugging);
     ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
     ecgTestLabels.printShape();
@@ -593,14 +594,17 @@ int fc_int_dfa_ecg_one_layer()
     pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_sigmoid;
     pktnn::pktfc fc1(128, 1);
     fc1.useDfa(true).setActv(a);
+    std::cout << "Neural network with 1 fc layer and pocket_sigmoid activation\n";
 
     // Initialy weights and biases are 0s
     // fc1.printWeight(std::cout);
     // fc1.printBias(std::cout);
 
     // Initial stats before training
+    std::cout << "----- Initial stats before training ----- \n";
     int numCorrect = 0;
     fc1.forward(ecgTrainInput);
+    // fc1.printOutput();
     for (int r = 0; r < numTrainSamples; ++r)
     {
         int output_row_r = 0;
@@ -612,6 +616,7 @@ int fc_int_dfa_ecg_one_layer()
     }
     std::cout << "Initial training numCorrect: " << numCorrect << " / " << numTrainSamples
               << "\n";
+    std::cout << "Initial training accuracy: " << (numCorrect * 1.0 / numTrainSamples) << "\n";
 
     numCorrect = 0;
     fc1.forward(ecgTestInput);
@@ -626,6 +631,7 @@ int fc_int_dfa_ecg_one_layer()
     }
     std::cout << "Initial test numCorrect: " << numCorrect << " / " << numTestSamples
               << "\n";
+    std::cout << "Initial test accuracy: " << (numCorrect * 1.0 / numTestSamples) << "\n";
 
     // Training
     std::cout << "----- Start training -----\n";
@@ -635,7 +641,11 @@ int fc_int_dfa_ecg_one_layer()
     pktnn::pktmat miniBatchInput;
     pktnn::pktmat miniBatchTrainTargets;
 
-    std::cout << "Learning Rate Inverse = " << config::lr_inv << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = " << config::mini_batch_size << ", numEpochs = " << config::epoch << "\n";
+    std::cout << "Learning Rate Inverse = " << config::lr_inv
+              << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = "
+              << config::mini_batch_size << ", numEpochs = " << config::epoch
+              << ", weight lower bound = " << config::weight_lower_bound
+              << ", weight upper bound = " << config::weight_upper_bound << "\n";
 
     // random indices template
     int *indices = new int[numTrainSamples];
@@ -644,6 +654,10 @@ int fc_int_dfa_ecg_one_layer()
         indices[i] = i;
     }
 
+    float best_train_acc = 0.0;
+    float best_test_acc = 0.0;
+    int best_train_epoch = 0;
+    int best_test_epoch = 0;
     std::string testCorrect = "";
     std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
     for (int e = 1; e <= config::epoch; ++e)
@@ -659,8 +673,7 @@ int fc_int_dfa_ecg_one_layer()
 
         if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv))
         {
-            // reducing the learning rate by a half every 5 epochs
-            // avoid overflow
+            // reducing the learning rate by a half every 5 epochs to avoid overflow
             config::lr_inv *= 2;
         }
 
@@ -669,6 +682,7 @@ int fc_int_dfa_ecg_one_layer()
         int epochNumCorrect = 0;
         int numIter = numTrainSamples / config::mini_batch_size;
 
+        // The training loop
         for (int i = 0; i < numIter; ++i)
         {
             int batchNumCorrect = 0;
@@ -681,6 +695,7 @@ int fc_int_dfa_ecg_one_layer()
             sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, fc1.mOutput);
             sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, fc1.mOutput);
 
+            // calculate the number of correct predictions in the batch
             for (int r = 0; r < config::mini_batch_size; ++r)
             {
                 int output_row_r = 0;
@@ -691,12 +706,20 @@ int fc_int_dfa_ecg_one_layer()
                     ++batchNumCorrect;
                 }
             }
-            fc1.backward(lossDeltaMat, config::lr_inv);
             epochNumCorrect += batchNumCorrect;
+            // the backward pass to calculate the gradients
+            fc1.backward(lossDeltaMat, config::lr_inv, config::weight_lower_bound, config::weight_upper_bound);
         }
-        std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << (epochNumCorrect * 1.0 / numTrainSamples) << "\n";
+        float train_acc = epochNumCorrect * 1.0 / numTrainSamples;
+        if (train_acc > best_train_acc)
+        {
+            best_train_acc = train_acc;
+            best_train_epoch = e;
+            // std::cout << "found best train accuracy = " << best_train_acc << " at epoch " << e << "\n";
+        }
+        std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << train_acc << "\n";
 
-        // check the test set accuracy
+        // after training through the whole dataset, check the test set accuracy
         fc1.forward(ecgTestInput);
         int testNumCorrect = 0;
         for (int r = 0; r < numTestSamples; ++r)
@@ -709,17 +732,33 @@ int fc_int_dfa_ecg_one_layer()
                 ++testNumCorrect;
             }
         }
-        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(testNumCorrect * 1.0 / numTestSamples)) + "\n";
+        float test_acc = testNumCorrect * 1.0 / numTestSamples;
+        if (test_acc > best_test_acc)
+        {
+            best_test_acc = test_acc;
+            best_test_epoch = e;
+            // std::cout << "found best test accuracy = " << best_test_acc << " at epoch " << e << "\n";
+        }
+        // TODO: save the best model
+        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(test_acc)) + "\n";
     }
     std::cout << "Epoch | NumCorrect | TestAccuracy \n";
     std::cout << testCorrect;
 
-    // fc1.mOutput.printMat(std::cout);
-    fc1.printWeight(std::cout);
-    fc1.printBias(std::cout);
+    std::cout << "----- Results -----\n";
+    std::cout << "best train accuracy = " << best_train_acc << " at epoch " << best_train_epoch << "\n";
+    std::cout << "best test accuracy = " << best_test_acc << " at epoch " << best_test_epoch << "\n";
 
-    // auto weight = fc1.getWeight();
-    // std::cout << weight.getColMax(0) << " " << weight.getColMin(0) << "\n";
+    // fc1.mOutput.printMat(std::cout);
+    std::cout << "trained weight shape: ";
+    fc1.getWeight().printShape();
+    std::cout << "trained weight average = " << fc1.getWeight().average()
+              << "; trained weight max value = " << fc1.getWeight().getColMax(0)
+              << "; trained weight min value = " << fc1.getWeight().getColMin(0) << "\n";
+    std::cout << "trained bias shape: ";
+    fc1.getBias().printShape();
+    std::cout << "trained bias = ";
+    fc1.getBias().printMat();
 
     return 0;
 }

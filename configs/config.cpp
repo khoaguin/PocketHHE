@@ -18,11 +18,13 @@ namespace config
     int mnist_cols = 28;
     // Neural network parameters
     int dim_input = mnist_rows * mnist_cols;
-    int dim_layer1 = 100;
-    int dim_layer2 = 50;
+    int dim_layer1 = 100; // only for MNIST neural net
+    int dim_layer2 = 50;  // only for the MNIST neural net
     int epoch = 100;
-    int mini_batch_size = 64; // CAUTION: Too big minibatch size can cause overflow
+    int mini_batch_size = 4; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 50;
+    int weight_lower_bound = -4095;
+    int weight_upper_bound = 4096;
     // Parameters to run experiments
     // uint64_t NUM_RUN = 50;
     // uint64_t NUM_VEC = 1;

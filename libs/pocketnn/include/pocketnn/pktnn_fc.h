@@ -11,13 +11,15 @@
 #include "pktnn_consts.h"
 #include "pktnn_actv.h"
 
-namespace pktnn {
-    class pktfc: public pktlayer {
+namespace pktnn
+{
+    class pktfc : public pktlayer
+    {
 
     private:
         int mInDim;
         int mOutDim;
-        pktmat* mInput;
+        pktmat *mInput;
         pktmat mWeight;
         pktmat mBias;
         pktmat mInter;
@@ -42,53 +44,54 @@ namespace pktnn {
         pktmat mDBn;
         pktmat mGammaUpdate;
         pktmat mBetaUpdate;
-        pktfc& batchNormalization();
+        pktfc &batchNormalization();
 
         // DFA
         bool mUseDfa = true;
         pktmat mDfaWeight;
-        
+
         std::string mName = "fc_noname";
         pktactv::Actv mActv = pktactv::Actv::pocket_tanh;
-        pktfc& computeDeltas(pktmat& lastDeltasMat, int lrInv);
+        pktfc &computeDeltas(pktmat &lastDeltasMat, int lrInv);
 
     public:
         pktmat mOutput;
-        const int& rowss = mInDim;
-        const int& colss = mOutDim;
+        const int &rowss = mInDim;
+        const int &colss = mOutDim;
 
         pktfc(int inDim, int outDim);
         ~pktfc();
 
         // getters
-        pktmat& getOutputForFc();
-        pktmat3d& getOutputForConv();
-        pktmat& getWeight();
-        pktmat& getBias();
-        pktmat& getDeltasTranspose();
+        pktmat &getOutputForFc();
+        pktmat3d &getOutputForConv();
+        pktmat &getWeight();
+        pktmat &getBias();
+        pktmat &getDeltasTranspose();
 
         // setters
-        pktfc& setName(std::string n);
-        pktfc& setRandomWeight();
-        pktfc& setRandomBias();
-        pktfc& setRandomDfaWeight(int r, int c);
-        pktfc& setActv(pktactv::Actv actv);
-        pktfc& initHeWeightBias();
-        pktfc& useBatchNormalization(bool useBn = true);
-        pktfc& useDfa(bool useDfa = true);
+        pktfc &setName(std::string n);
+        pktfc &setRandomWeight();
+        pktfc &setRandomBias();
+        pktfc &setRandomDfaWeight(int r, int c);
+        pktfc &setActv(pktactv::Actv actv);
+        pktfc &initHeWeightBias();
+        pktfc &useBatchNormalization(bool useBn = true);
+        pktfc &useDfa(bool useDfa = true);
 
         // forward and backward
-        pktfc& forward(pktmat& x);
-        pktlayer& forward(pktlayer& x);
-        pktlayer& backward(pktmat& lastDeltasMat, int lrInv);
-        
+        pktfc &forward(pktmat &x);
+        pktlayer &forward(pktlayer &x);
+        pktlayer &backward(pktmat &lastDeltasMat, int lrInv,
+                           int weight_lower_bound = -4095, int weight_upper_bound = 4096);
+
         // print functions
-        pktfc& printWeight(std::ostream& outTo = std::cout);
-        pktfc& printBias(std::ostream& outTo = std::cout);
-        pktfc& printInter(std::ostream& outTo = std::cout);
-        pktfc& printOutput(std::ostream& outTo = std::cout);
-        pktfc& printWeightShape(std::ostream& outTo = std::cout);
-        pktfc& printBiasShape(std::ostream& outTo = std::cout);
+        pktfc &printWeight(std::ostream &outTo = std::cout);
+        pktfc &printBias(std::ostream &outTo = std::cout);
+        pktfc &printInter(std::ostream &outTo = std::cout);
+        pktfc &printOutput(std::ostream &outTo = std::cout);
+        pktfc &printWeightShape(std::ostream &outTo = std::cout);
+        pktfc &printBiasShape(std::ostream &outTo = std::cout);
 
         // save weights and biases
         void saveWeight(std::string fileName);

@@ -170,7 +170,7 @@ pktlayer &pktnn::pktfc::forward(pktlayer &x)
 }
 
 // backward
-pktlayer &pktnn::pktfc::backward(pktmat &lastLayerDeltasMat, int lrInv)
+pktlayer &pktnn::pktfc::backward(pktmat &lastLayerDeltasMat, int lrInv, int lower_bound, int upper_bound)
 {
     computeDeltas(lastLayerDeltasMat, lrInv); // (N, Dlast)
     // this line should be after computeDeltas()
@@ -220,8 +220,8 @@ pktlayer &pktnn::pktfc::backward(pktmat &lastLayerDeltasMat, int lrInv)
     // weight and bias upper and lower bound (SHRT_MIN + 1 = -32767. SHRT_MAX = 32768)
     // mWeight.clampMat(SHRT_MIN + 1, SHRT_MAX);
     // mBias.clampMat(SHRT_MIN + 1, SHRT_MAX);
-    mWeight.clampMat(-4096 + 1, 4096);
-    mBias.clampMat(-4096 + 1, 4096);
+    mWeight.clampMat(lower_bound, upper_bound);
+    mBias.clampMat(lower_bound, upper_bound);
 
     if (pPrevLayer != nullptr)
     {

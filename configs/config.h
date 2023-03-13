@@ -23,6 +23,8 @@ namespace config
     extern int epoch;
     extern int mini_batch_size; // CAUTION: Too big minibatch size can cause overflow
     extern int lr_inv;
+    extern int weight_lower_bound;
+    extern int weight_upper_bound;
     // Parameters to run experiments
     // extern uint64_t NUM_RUN;  // Number of runs to average over and get the final experimental results
     // extern uint64_t NUM_VEC;  // Number of vectors that the user has
