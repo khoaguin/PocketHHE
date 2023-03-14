@@ -767,7 +767,7 @@ int fc_int_dfa_ecg_one_layer()
 
 int fc_int_dfa_ecg_one_layer_inference()
 {
-    utils::print_example_banner("PocketNN: Inference on MITBIH ECG data using pretrained weights for the 1-layer network");
+    utils::print_example_banner("PocketNN: Inference on MIT-BIH ECG data using pretrained weights for the 1-layer network");
     std::cout << "----- Constructing the network -----\n";
     pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_sigmoid;
     pktnn::pktfc fc1(128, 1);
