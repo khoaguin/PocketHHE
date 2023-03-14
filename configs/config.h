@@ -27,7 +27,8 @@ namespace config
     extern int lr_inv;
     extern int weight_lower_bound;
     extern int weight_upper_bound;
-    extern std::string save_path;
+    extern std::string save_weight_path;
+    extern std::string save_bias_path;
     // Parameters to run experiments
     // extern uint64_t NUM_RUN;  // Number of runs to average over and get the final experimental results
     // extern uint64_t NUM_VEC;  // Number of vectors that the user has
