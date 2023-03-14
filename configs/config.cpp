@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <cstddef>
 
+#include <string>
+
 namespace config
 {
     bool debugging = false;
@@ -25,6 +27,7 @@ namespace config
     int lr_inv = 50;
     int weight_lower_bound = -4095;
     int weight_upper_bound = 4096;
+    std::string save_path = "weights/ecg/";
     // Parameters to run experiments
     // uint64_t NUM_RUN = 50;
     // uint64_t NUM_VEC = 1;

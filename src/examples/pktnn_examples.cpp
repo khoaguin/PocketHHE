@@ -733,14 +733,16 @@ int fc_int_dfa_ecg_one_layer()
             }
         }
         float test_acc = testNumCorrect * 1.0 / numTestSamples;
+        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(test_acc)) + "\n";
         if (test_acc > best_test_acc)
         {
             best_test_acc = test_acc;
             best_test_epoch = e;
-            // std::cout << "found best test accuracy = " << best_test_acc << " at epoch " << e << "\n";
+            testCorrect += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". ";
+            testCorrect += "save weights and biases to " + config::save_path + "\n";
+            fc1.saveWeight(config::save_path + "fc1_weight_100epochs.csv");
+            fc1.saveBias(config::save_path + "fc1_bias_100epochs.csv");
         }
-        // TODO: save the best model
-        testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(test_acc)) + "\n";
     }
     std::cout << "Epoch | NumCorrect | TestAccuracy \n";
     std::cout << testCorrect;
@@ -759,6 +761,63 @@ int fc_int_dfa_ecg_one_layer()
     fc1.getBias().printShape();
     std::cout << "trained bias = ";
     fc1.getBias().printMat();
+
+    return 0;
+}
+
+int fc_int_dfa_ecg_one_layer_inference()
+{
+    utils::print_example_banner("PocketNN: Inference on MITBIH ECG data using pretrained weights for the 1-layer network");
+    std::cout << "----- Constructing the network -----\n";
+    pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_tanh;
+    pktnn::pktfc fc1(config::dim_input, config::dim_layer1);
+    fc1.useDfa(true).setActv(a);
+    std::cout << "Constructing the 1-layer fully connected neural network done!\n";
+
+    // std::cout << "----- Loading the MNIST test data -----\n";
+    // int numTestSamples = 10000;
+    // pktnn::pktmat mnistTestLabels;
+    // pktnn::pktmat mnistTestImages;
+    // pktnn::pktloader::loadMnistImages(mnistTestImages, numTestSamples, false); // numTestSamples x (28*28)
+    // pktnn::pktloader::loadMnistLabels(mnistTestLabels, numTestSamples, false); // numTestSamples x 1
+    // std::cout << "Loaded test images: " << mnistTestImages.rows() << "\n";
+    // // mnistTestImages.printMat();
+
+    // std::cout << "----- Initial Test Before Loading Weights -----\n";
+    // pktnn::pktmat testTargetMat(numTestSamples, config::num_classes);
+    // int numCorrect = 0;
+    // fc1.forward(mnistTestImages);
+    // for (int r = 0; r < numTestSamples; ++r)
+    // {
+    //     testTargetMat.setElem(r, mnistTestLabels.getElem(r, 0), pktnn::UNSIGNED_4BIT_MAX);
+    //     if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+    //     {
+    //         ++numCorrect;
+    //     }
+    // }
+    // std::cout << "Initial test numCorrect: " << numCorrect << " / 10000"
+    //           << "\n";
+    // std::cout << "Initial test accuracy = " << (numCorrect * 1.0 / numTestSamples) << "\n";
+    // // testTargetMat.printMat(std::cout);
+
+    // std::cout << "----- Loading weights and biases -----\n";
+    // fc1.loadWeight("weights/1_layer/fc1_weight_50epochs.csv");
+    // fc1.loadBias("weights/1_layer/fc1_bias_50epochs.csv");
+    // fc1.printWeightShape(std::cout);
+    // fc1.printBiasShape(std::cout);
+
+    // std::cout << "----- Test -----\n";
+    // fc1.forward(mnistTestImages);
+    // int testCorrect = 0;
+    // for (int r = 0; r < numTestSamples; ++r)
+    // {
+    //     if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
+    //     {
+    //         ++testCorrect;
+    //     }
+    // }
+    // std::cout << "Final test numCorrect = " << testCorrect << "\n";
+    // std::cout << "Final test accuracy = " << (testCorrect * 1.0 / numTestSamples) << "\n";
 
     return 0;
 }
