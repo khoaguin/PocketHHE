@@ -12,4 +12,9 @@ namespace ecg_test
                               const seal::BatchEncoder &benc,
                               seal::Decryptor &dec,
                               int vec_size);
+
+    int test_encrypted_bias(std::vector<seal::Ciphertext> &enc_bias,
+                            pktnn::pktmat &original_bias,
+                            const seal::SecretKey &he_sk,
+                            seal::Decryptor &dec);
 } // end of ecg_test namespace

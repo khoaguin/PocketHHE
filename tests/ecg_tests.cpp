@@ -16,4 +16,14 @@ namespace ecg_test
         assert(decrypted_row == org_row);
         return 0;
     }
+
+    int test_encrypted_bias(std::vector<seal::Ciphertext> &enc_bias,
+                            pktnn::pktmat &original_bias,
+                            const seal::SecretKey &he_sk,
+                            seal::Decryptor &dec)
+    {
+        pktnn::pktmat dec_bias = sealhelper::decrypt_bias(enc_bias, he_sk, dec);
+        assert(dec_bias.getRow(0) == original_bias.getRow(0));
+        return 0;
+    }
 } // end of ecg_test namespace

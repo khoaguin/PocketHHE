@@ -18,10 +18,10 @@ namespace hhe_pktnn_examples
 {
     struct Analyst
     {
-        std::vector<int64_t> w; // plaintext weights
-        std::vector<int64_t> b; // plaintext biases
-        seal::Ciphertext w_c;   // the encrypted weights
-        seal::Ciphertext b_c;   // the encrypted biases
+        pktnn::pktmat weight;                     // plaintext weight
+        pktnn::pktmat bias;                       // plaintext bias
+        std::vector<seal::Ciphertext> enc_weight; // the encrypted weight
+        std::vector<seal::Ciphertext> enc_bias;   // the encrypted bias
         // the HE keys
         seal::PublicKey he_pk;
         seal::SecretKey he_sk;
@@ -35,8 +35,8 @@ namespace hhe_pktnn_examples
         std::vector<uint64_t> k;           // the secret symmetric keys
         std::vector<seal::Ciphertext> c_k; // the HE encrypted symmetric keys
         // the plaintext data
-        pktnn::pktmat mnistTestData;   // the plaintext test images
-        pktnn::pktmat mnistTestLabels; // the plaintext test labels
+        pktnn::pktmat testData;   // the plaintext test images
+        pktnn::pktmat testLabels; // the plaintext test labels
         // the encrypted data
         std::vector<std::vector<uint64_t>> c_ims; // the symmetric encrypted images
     };

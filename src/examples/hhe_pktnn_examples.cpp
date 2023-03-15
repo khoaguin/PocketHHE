@@ -113,8 +113,8 @@ namespace hhe_pktnn_examples
         std::cout << ""
                   << "\n";
         mnistTestImages.printShape();
-        client.mnistTestData = mnistTestImages;
-        client.mnistTestLabels = mnistTestLabels;
+        client.testData = mnistTestImages;
+        client.testLabels = mnistTestLabels;
 
         utils::print_line(__LINE__);
         std::cout << "Client creates the symmetric key" << std::endl;
@@ -141,11 +141,11 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "Client encrypts his MNIST images using the symmetric key" << std::endl;
         pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
-        client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.mnistTestData); // the symmetric encrypted images
+        client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.testData); // the symmetric encrypted images
         std::cout << "Number of encrypted images = " << client.c_ims.size() << "\n";
         if (config::verbose)
         {
-            client.mnistTestData.printMat();
+            client.testData.printMat();
             for (auto i : client.c_ims)
             {
                 utils::print_vec(i, i.size(), "Encrypted image ");
@@ -173,7 +173,7 @@ namespace hhe_pktnn_examples
         pktnn::pktmat weight_t_row;
         weight_t_row.sliceOf(weight_t, 0, 0, 0, 783);
         weight_t_row.printShape();
-        result.matElemMulMat(weight_t_row, client.mnistTestData);
+        result.matElemMulMat(weight_t_row, client.testData);
         std::cout << "Max value = " << result.getRowMax(0) << std::endl;
         std::cout << "Min value = " << result.getRowMin(0) << std::endl;
 
@@ -210,7 +210,7 @@ namespace hhe_pktnn_examples
 
         /*
         decomposing only 1 image
-        c_ims_prime will be the HE encrypted images of client.mnistTestLabels
+        c_ims_prime will be the HE encrypted images of client.testLabels
         */
         // std::vector<seal::Ciphertext> c_ims_prime = HHE.decomposition(client.c_ims[0], client.c_k, config::USE_BATCH);
         // std::cout << "One MNIST image is decomposed into = " << c_ims_prime.size() << " ciphertexts"
@@ -239,7 +239,7 @@ namespace hhe_pktnn_examples
 
         // debugging: decrypt and check if the flattened result is correct
         // std::cout << "MNIST test image = ";
-        // client.mnistTestData.printMat();
+        // client.testData.printMat();
         // auto decrypted_im = sealhelper::decrypting(c_im_he, analyst.he_sk, analyst_he_benc,
         //                                            *context, 784);
         // utils::print_vec(decrypted_im, decrypted_im.size(), "Decrypted image");
@@ -270,10 +270,6 @@ namespace hhe_pktnn_examples
         utils::print_example_banner("PocketHHE: Privacy-preserving Inference with a 1-layer Neural Network on Integer ECG dataset");
 
         // the actors in the protocol
-        utils::print_line(__LINE__);
-        std::cout << "---------------------- Create the parties ----------------------"
-                  << "\n";
-        std::cout << "Create analyst, data owner / client, server / csp \n";
         Analyst analyst;
         Client client;
         CSP csp;
@@ -319,32 +315,72 @@ namespace hhe_pktnn_examples
         fc.printWeightShape();
         fc.printBiasShape();
         // get the weights and biases to encrypt later
-        pktnn::pktmat fc_weight;
-        pktnn::pktmat fc_bias;
-        fc_weight = fc.getWeight();
-        fc_bias = fc.getBias();
-        // fc_weight.printMat();
-        // fc_bias.printMat();
+        analyst.weight = fc.getWeight();
+        analyst.bias = fc.getBias();
+        // analyst.weight.printMat();
+        // analyst.bias.printMat();
 
         utils::print_line(__LINE__);
         std::cout << "Analyst encrypts the weights and biases using HE"
                   << "\n";
         pktnn::pktmat fc_weight_t;
-        fc_weight_t.transposeOf(fc_weight);
-        std::vector<seal::Ciphertext> enc_weight = sealhelper::encrypt_weight(fc_weight_t,
-                                                                              analyst.he_pk,
-                                                                              analyst_he_benc,
-                                                                              analyst_he_enc);
-        std::cout << "The encrypted weight vector has " << enc_weight.size() << " ciphertexts\n";
-        ecg_test::test_encrypted_weight(enc_weight,
+        fc_weight_t.transposeOf(analyst.weight);
+        analyst.enc_weight = sealhelper::encrypt_weight(fc_weight_t,
+                                                        analyst.he_pk,
+                                                        analyst_he_benc,
+                                                        analyst_he_enc);
+        std::cout << "Encrypt the bias...";
+        std::cout << "The encrypted weight vector has " << analyst.enc_weight.size() << " ciphertexts\n";
+        ecg_test::test_encrypted_weight(analyst.enc_weight,
                                         fc_weight_t,
                                         analyst.he_sk,
                                         analyst_he_benc,
                                         analyst_he_dec,
                                         128);
-        std::cout << "Encrypt the bias..."
+        std::cout << "Encrypt the bias...";
+        analyst.enc_bias = sealhelper::encrypt_bias(analyst.bias,
+                                                    analyst.he_pk,
+                                                    analyst_he_enc);
+        std::cout << "The encrypted bias vector has " << analyst.enc_bias.size() << " ciphertexts\n";
+        ecg_test::test_encrypted_bias(analyst.enc_bias,
+                                      analyst.bias,
+                                      analyst.he_sk,
+                                      analyst_he_dec);
+
+        std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
                   << "\n";
-        std::vector<seal::Ciphertext> enc_bias = sealhelper::encrypt_bias(fc_bias, analyst.he_pk, analyst_he_enc);
+
+        // The Client (Data Owner)
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Client (Data Owner) ----------------------"
+                  << "\n";
+
+        utils::print_line(__LINE__);
+        std::cout << "Client loads his ECG data" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Client creates the symmetric key" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Client encrypts his symmetric key using HE" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Client encrypts his ECG data using the symmetric key" << std::endl;
+
+        std::cout << "The client sends the encrypted data and the HE encrypted symmetric key to the CSP..."
+                  << "\n";
+
+        // The Cloud Service Provider (CSP)
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "-------------------------- CSP ----------------------" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP evaluates the HE encrypted neural network on the HE encrypted data" << std::endl;
 
         return 0;
     }
