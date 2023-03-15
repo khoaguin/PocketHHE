@@ -150,7 +150,7 @@ namespace sealhelper
     }
 
     /*
-    Helper function: Encrypts the weight matrix into a vector of ciphertexts of its column vectors.
+    Helper function: Encrypt each number in the bias vector into a ciphertext (no batch encoder needed).
     */
     std::vector<seal::Ciphertext> encrypt_bias(pktnn::pktmat &bias,
                                                const seal::PublicKey &he_pk,

@@ -326,6 +326,26 @@ namespace hhe_pktnn_examples
         // fc_weight.printMat();
         // fc_bias.printMat();
 
+        utils::print_line(__LINE__);
+        std::cout << "Analyst encrypts the weights and biases using HE"
+                  << "\n";
+        pktnn::pktmat fc_weight_t;
+        fc_weight_t.transposeOf(fc_weight);
+        std::vector<seal::Ciphertext> enc_weight = sealhelper::encrypt_weight(fc_weight_t,
+                                                                              analyst.he_pk,
+                                                                              analyst_he_benc,
+                                                                              analyst_he_enc);
+        std::cout << "The encrypted weight vector has " << enc_weight.size() << " ciphertexts\n";
+        ecg_test::test_encrypted_weight(enc_weight,
+                                        fc_weight_t,
+                                        analyst.he_sk,
+                                        analyst_he_benc,
+                                        analyst_he_dec,
+                                        128);
+        std::cout << "Encrypt the bias..."
+                  << "\n";
+        std::vector<seal::Ciphertext> enc_bias = sealhelper::encrypt_bias(fc_bias, analyst.he_pk, analyst_he_enc);
+
         return 0;
     }
 

@@ -12,6 +12,7 @@
 #include "../util/utils.h"
 #include "../pasta/pasta_3_plain.h"
 #include "../pasta/pasta_3_seal.h"
+#include "../../tests/ecg_tests.h"
 
 namespace hhe_pktnn_examples
 {

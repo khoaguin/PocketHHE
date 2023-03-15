@@ -19,6 +19,7 @@ set(PROJECT_SOURCE
     ${SOURCE_DIR}/pasta/pasta_3_seal.cpp
     ${SOURCE_DIR}/pasta/SEAL_Cipher.cpp
     configs/config.cpp
+    tests/ecg_tests.cpp
 )
 
 set(LIBRARIES_DIR
