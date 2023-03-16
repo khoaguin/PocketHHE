@@ -9,7 +9,7 @@ int main()
     // fc_int_dfa_mnist_inference();  // inference on MNIST using model trained with direct feedback alignment
 
     // fc_int_dfa_mnist_one_layer(); // training on MNIST using direct feedback alignment (only 1 layer)
-    // fc_int_dfa_mnist_one_layer_inference(); // inference on MNIST using model trained with direct feedback alignment (only 1 layer)
+    fc_int_dfa_mnist_one_layer_inference(); // inference on MNIST using model trained with direct feedback alignment (only 1 layer)
 
     // fc_int_dfa_ecg_one_layer(); // training on MIT-BIH using direct feedback alignment (only 1 layer)
     // fc_int_dfa_ecg_one_layer_inference();

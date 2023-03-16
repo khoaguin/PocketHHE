@@ -547,7 +547,7 @@ int fc_int_dfa_mnist_one_layer_inference()
     fc1.printWeightShape(std::cout);
     fc1.printBiasShape(std::cout);
     // fc1.getWeight().printMat(std::cout);
-    fc1.getBias().printMat(std::cout);
+    // fc1.getBias().printMat(std::cout);
 
     std::cout << "----- Test -----\n";
     int testCorrect = 0;
