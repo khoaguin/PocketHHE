@@ -20,15 +20,15 @@ namespace config
     int mnist_cols = 28;
     // Neural network parameters
     int dim_input = mnist_rows * mnist_cols;
-    int dim_layer1 = 100; // only for MNIST neural net
-    int dim_layer2 = 50;  // only for the MNIST neural net
+    int dim_layer1 = 100; // only for the 3-layer MNIST neural net
+    int dim_layer2 = 50;  // only for the 3-layer MNIST neural net
     int epoch = 50;
     int mini_batch_size = 4; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 50;
-    int weight_lower_bound = -4095;
-    int weight_upper_bound = 4096;
-    std::string save_weight_path = "weights/ecg/fc1_weight_50epochs_bz4.csv";
-    std::string save_bias_path = "weights/ecg/fc1_bias_50epochs_bs4.csv";
+    int weight_lower_bound = -255;
+    int weight_upper_bound = 256;
+    std::string save_weight_path = "weights/mnist/fc1_weight_50epochs_bz4_weightClamp256.csv";
+    std::string save_bias_path = "weights/mnist/fc1_bias_50epochs_bs4_weightClamp256.csv";
     // Parameters to run experiments
     // uint64_t NUM_RUN = 50;
     // uint64_t NUM_VEC = 1;

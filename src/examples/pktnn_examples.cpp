@@ -393,7 +393,11 @@ int fc_int_dfa_mnist_one_layer()
     pktnn::pktmat miniBatchImages;
     pktnn::pktmat miniBatchTrainTargets;
 
-    std::cout << "Learning Rate Inverse = " << config::lr_inv << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = " << config::mini_batch_size << ", numEpochs = " << config::epoch << "\n";
+    std::cout << "Learning Rate Inverse = " << config::lr_inv << ", numTrainSamples = "
+              << numTrainSamples << ", miniBatchSize = " << config::mini_batch_size
+              << ", numEpochs = " << config::epoch
+              << ", weight lower bound = " << config::weight_lower_bound
+              << ", weight upper bound = " << config::weight_upper_bound << "\n";
 
     // random indices template
     int *indices = new int[numTrainSamples];
@@ -448,7 +452,7 @@ int fc_int_dfa_mnist_one_layer()
                     ++batchNumCorrect;
                 }
             }
-            fc1.backward(lossDeltaMat, config::lr_inv);
+            fc1.backward(lossDeltaMat, config::lr_inv, config::weight_lower_bound, config::weight_upper_bound);
             epochNumCorrect += batchNumCorrect;
         }
         std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << (epochNumCorrect * 1.0 / numTrainSamples) << "\n";
@@ -494,8 +498,8 @@ int fc_int_dfa_mnist_one_layer()
     std::cout << "Final learning rate inverse = " << config::lr_inv << "\n";
 
     std::cout << "----- Save weights and biases after training -----\n";
-    fc1.saveWeight("weights/1_layer/fc1_weight_50epochs.csv");
-    fc1.saveBias("weights/1_layer/fc1_bias_50epochs.csv");
+    fc1.saveWeight(config::save_weight_path);
+    fc1.saveBias(config::save_bias_path);
 
     delete[] indices;
 
@@ -507,7 +511,7 @@ int fc_int_dfa_mnist_one_layer_inference()
     utils::print_example_banner("PocketNN: Inference on MNIST using pretrained weights for the 1-layer network");
     std::cout << "----- Constructing the network -----\n";
     pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_tanh;
-    pktnn::pktfc fc1(config::dim_input, config::dim_layer1);
+    pktnn::pktfc fc1(config::dim_input, config::num_classes);
     fc1.useDfa(true).setActv(a);
     std::cout << "Constructing the 1-layer fully connected neural network done!\n";
 
@@ -538,14 +542,16 @@ int fc_int_dfa_mnist_one_layer_inference()
     // testTargetMat.printMat(std::cout);
 
     std::cout << "----- Loading weights and biases -----\n";
-    fc1.loadWeight("weights/1_layer/fc1_weight_50epochs.csv");
-    fc1.loadBias("weights/1_layer/fc1_bias_50epochs.csv");
+    fc1.loadWeight("weights/mnist/fc1_weight_50epochs_bz4_weightClamp256.csv");
+    fc1.loadBias("weights/mnist/fc1_bias_50epochs_bs4_weightClamp256.csv");
     fc1.printWeightShape(std::cout);
     fc1.printBiasShape(std::cout);
+    // fc1.getWeight().printMat(std::cout);
+    fc1.getBias().printMat(std::cout);
 
     std::cout << "----- Test -----\n";
-    fc1.forward(mnistTestImages);
     int testCorrect = 0;
+    fc1.forward(mnistTestImages);
     for (int r = 0; r < numTestSamples; ++r)
     {
         if (testTargetMat.getMaxIndexInRow(r) == fc1.mOutput.getMaxIndexInRow((r)))
