@@ -38,15 +38,25 @@ namespace hhe_pktnn_examples
         pktnn::pktmat testData;   // the plaintext test images
         pktnn::pktmat testLabels; // the plaintext test labels
         // the encrypted data
-        std::vector<std::vector<uint64_t>> c_ims; // the symmetric encrypted images
+        std::vector<std::vector<uint64_t>> cs; // the symmetric encrypted data
     };
 
     struct CSP
     {
+        // things received from the analyst (data scientist)
+        seal::PublicKey he_pk;
+        seal::RelinKeys he_rk;
+        seal::GaloisKeys he_gk;
+        std::vector<seal::Ciphertext> enc_weight; // the encrypted weight (received from the analyst)
+        std::vector<seal::Ciphertext> enc_bias;   // the encrypted bias (received from the analyst)
+        // things received from the client
+        std::vector<seal::Ciphertext> c_k;     // the HE encrypted symmetric keys (received from the client)
+        std::vector<std::vector<uint64_t>> cs; // the symmetric encrypted data (received from the client)
         // the HE secret key needed to construct the HHE object
         seal::SecretKey he_sk;
-        // the HE encrypted data of user's test images (after decomposition of client.c_ims)
-        std::vector<seal::Ciphertext> c_prime;
+        // the HE encrypted data after decomposition (and post-process if needed) of the
+        // user's symmetric encrypted test data
+        std::vector<seal::Ciphertext> c_primes;
         // the HE encrypted results that will be sent to the Analyst
         seal::Ciphertext c_res;
     };

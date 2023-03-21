@@ -7,6 +7,7 @@ namespace config
 {
     extern bool debugging;
     extern bool verbose;
+    extern int dry_run;
     // HE parameters
     extern uint64_t plain_mod;
     extern uint64_t mod_degree;

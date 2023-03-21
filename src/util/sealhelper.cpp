@@ -192,20 +192,31 @@ namespace sealhelper
         return dec_bias;
     }
 
-    std::vector<uint64_t> decrypting(const seal::Ciphertext &enc_input,
-                                     const seal::SecretKey &he_sk,
-                                     const seal::BatchEncoder &benc,
-                                     const seal::SEALContext &context,
-                                     size_t size)
+    /*
+    Helper function: Decrypt a SEAL Ciphertext.
+    */
+    std::vector<int64_t> decrypting(const seal::Ciphertext &enc_input,
+                                    const seal::SecretKey &he_sk,
+                                    const seal::BatchEncoder &benc,
+                                    const seal::SEALContext &context,
+                                    size_t size)
     {
         // decrypt and decode the encrypted input
         seal::Decryptor decryptor(context, he_sk);
         seal::Plaintext plain_input;
         decryptor.decrypt(enc_input, plain_input);
-        std::vector<uint64_t> decrypted_vec;
+        std::vector<int64_t> decrypted_vec;
         benc.decode(plain_input, decrypted_vec);
 
         return {decrypted_vec.begin(), decrypted_vec.begin() + size};
+    }
+
+    void packed_enc_multiply(const seal::Ciphertext &encrypted1,
+                             const seal::Ciphertext &encrypted2,
+                             seal::Ciphertext &destination,
+                             const seal::Evaluator &evaluator)
+    {
+        evaluator.multiply(encrypted1, encrypted2, destination);
     }
 
 } // end of sealhelper namespace

@@ -95,6 +95,8 @@ namespace hhe_pktnn_examples
         }
         std::cout << "Analyst sends the encrypted weights and bias to the CSP..."
                   << "\n";
+        csp.enc_weight = analyst.enc_weight;
+        csp.enc_bias = analyst.enc_bias;
 
         // Client (Data Owner)
         std::cout << "\n";
@@ -141,16 +143,16 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "Client encrypts his MNIST images using the symmetric key" << std::endl;
         pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
-        client.c_ims = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.testData); // the symmetric encrypted images
-        std::cout << "Number of encrypted images = " << client.c_ims.size() << "\n";
+        client.cs = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.testData); // the symmetric encrypted images
+        std::cout << "Number of encrypted images = " << client.cs.size() << "\n";
         if (config::verbose)
         {
             client.testData.printMat();
-            for (auto i : client.c_ims)
+            for (auto i : client.cs)
             {
                 utils::print_vec(i, i.size(), "Encrypted image ");
             }
-            auto dec_ims = pastahelper::symmetric_decrypt(SymmetricEncryptor, client.c_ims);
+            auto dec_ims = pastahelper::symmetric_decrypt(SymmetricEncryptor, client.cs);
             for (auto i : dec_ims)
             {
                 utils::print_vec(i, i.size(), "Decrypted image ");
@@ -347,8 +349,16 @@ namespace hhe_pktnn_examples
                                       analyst.he_sk,
                                       analyst_he_dec);
 
+        utils::print_line(__LINE__);
+        std::cout << "Analyst sends the HE keys (except the secret key) to the CSP..."
+                  << "\n";
+        csp.he_gk = analyst.he_gk;
+        csp.he_pk = analyst.he_pk;
+        csp.he_rk = analyst.he_rk;
         std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
                   << "\n";
+        csp.enc_weight = analyst.enc_weight;
+        csp.enc_bias = analyst.enc_bias;
 
         // The Client (Data Owner)
         std::cout << "\n";
@@ -357,19 +367,58 @@ namespace hhe_pktnn_examples
                   << "\n";
 
         utils::print_line(__LINE__);
-        std::cout << "Client loads his ECG data" << std::endl;
+        std::cout << "Client loads his ECG test data" << std::endl;
+        int numTestSamples = 13245;
+        pktnn::pktmat ecgTestLabels(numTestSamples, 1);
+        pktnn::pktmat ecgTestInput(numTestSamples, 128);
+        pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
+                                      numTestSamples, config::debugging);
+
+        pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
+                                        numTestSamples, config::debugging);
+        ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
+
+        if (config::dry_run > 0) // get a slice of dry_run data samples
+        {
+            std::cout << "Dry run: get a slice of " << config::dry_run << " data samples"
+                      << "\n";
+            client.testData.sliceOf(ecgTestInput, 0, config::dry_run - 1, 0, 127);
+            client.testLabels.sliceOf(ecgTestLabels, 0, config::dry_run - 1, 0, 0);
+        }
+        else
+        {
+            client.testData = ecgTestInput;
+            client.testLabels = ecgTestLabels;
+        }
+        std::cout << "Test data shape: ";
+        client.testData.printShape();
+        std::cout << "Test labels shape: ";
+        client.testLabels.printShape();
+
+        // client.testData.printMat();
+        // client.testLabels.printMat();
 
         utils::print_line(__LINE__);
         std::cout << "Client creates the symmetric key" << std::endl;
+        client.k = pastahelper::get_symmetric_key();
+        std::cout << "Symmetric key size: " << client.k.size() << "\n";
+        // utils::print_vec(client.k, client.k.size(), "Symmetric key: ");
 
         utils::print_line(__LINE__);
         std::cout << "Client encrypts his symmetric key using HE" << std::endl;
+        client.c_k = pastahelper::encrypt_symmetric_key(client.k, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
 
         utils::print_line(__LINE__);
-        std::cout << "Client encrypts his ECG data using the symmetric key" << std::endl;
+        std::cout << "Client symmetrically encrypts his ECG data" << std::endl;
+        pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
+        client.cs = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.testData); // the symmetric encrypted images
+        std::cout << "The symmetric encrypted data has " << client.cs.size() << " ciphertexts\n";
 
+        utils::print_line(__LINE__);
         std::cout << "The client sends the encrypted data and the HE encrypted symmetric key to the CSP..."
                   << "\n";
+        csp.c_k = client.c_k;
+        csp.cs = client.cs;
 
         // The Cloud Service Provider (CSP)
         std::cout << "\n";
@@ -378,9 +427,57 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
+        seal::KeyGenerator csp_keygen(*context);
+        csp.he_sk = csp_keygen.secret_key();
+        // Below is to check if the csp key is different to the analyst key (they must be different)
+        // csp.he_sk.save(std::cout);
+        // std::cout << "\n";
+        // analyst.he_sk.save(std::cout);
+        // std::cout << "\n";
+        pasta::PASTA_SEAL HHE(context, csp.he_pk, csp.he_sk, csp.he_rk, csp.he_gk);
+        for (std::vector<uint64_t> c : csp.cs)
+        {
+            std::vector<seal::Ciphertext> c_prime = HHE.decomposition(c, csp.c_k, config::USE_BATCH);
+            if (c_prime.size() == 1)
+            {
+                // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key to see
+                // if the decryption is same as the plaintext data of the client
+                // std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
+                // utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ");
+                csp.c_primes.push_back(c_prime[0]);
+            }
+            else
+            {
+                std::cout << "there are more than 1 ciphertexts in the decomposed ciphertexts\n";
+                std::cout << "we need to do some post-processing\n";
+            }
+        }
+        std::cout << "There are " << csp.c_primes.size() << " decomposed HE ciphertexts\n";
 
         utils::print_line(__LINE__);
-        std::cout << "CSP evaluates the HE encrypted neural network on the HE encrypted data" << std::endl;
+        std::cout << "CSP evaluates the HE encrypted weights & biases on the HE encrypted data" << std::endl;
+        for (seal::Ciphertext c_prime : csp.c_primes)
+        {
+            seal::Ciphertext enc_result;
+            sealhelper::packed_enc_multiply(c_prime, csp.enc_weight[0], enc_result, analyst_he_eval);
+            // --- for debugging: decrypt the result with the analyst's secret key
+            // std::vector<int64_t> dec_result = sealhelper::decrypting(enc_result, analyst.he_sk, analyst_he_benc, *context, 128);
+            // utils::print_vec(dec_result, dec_result.size(), "decrypted result ");
+        }
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP sends the HE encrypted result to the analyst" << std::endl;
+
+        // The Analyst
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Analyst ----------------------"
+                  << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "The analyst applies the non-linear operations on the decrypted results and get the final predictions" << std::endl;
 
         return 0;
     }

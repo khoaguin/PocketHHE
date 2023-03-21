@@ -8,8 +8,8 @@
 #include "../pasta/pasta_3_plain.h"
 #include "../pasta/pasta_3_seal.h"
 
-
-namespace pastahelper {
+namespace pastahelper
+{
     /*
     Helper function: Create galois keys indices to create HE galois keys
     */
@@ -21,9 +21,10 @@ namespace pastahelper {
     std::vector<uint64_t> get_symmetric_key();
 
     /*
-    Helper function: Symmetric encryption
+    Helper function: Symmetric encryption. Loop through the input matrix and encrypt each row.
+    Note that the input needs to be a matrix of positive integers.
     */
-    std::vector<std::vector<uint64_t>> symmetric_encrypt(const pasta::PASTA &encryptor, const pktnn::pktmat &plaintext) ;
+    std::vector<std::vector<uint64_t>> symmetric_encrypt(const pasta::PASTA &encryptor, const pktnn::pktmat &plaintext);
 
     /*
     Helper function: Symmetric decryption
@@ -34,7 +35,7 @@ namespace pastahelper {
     Helper function: Encrypt the symmetric key using HE
     This function is adapted from https://github.com/IAIK/hybrid-HE-framework/blob/master/ciphers/pasta_3/seal/pasta_3_seal.cpp
     */
-    std::vector<seal::Ciphertext> encrypt_symmetric_key(const std::vector<uint64_t> &ssk, 
+    std::vector<seal::Ciphertext> encrypt_symmetric_key(const std::vector<uint64_t> &ssk,
                                                         bool batch_encoder,
                                                         const seal::BatchEncoder &benc,
                                                         const seal::Encryptor &enc);
@@ -42,10 +43,10 @@ namespace pastahelper {
     Helper function: Encrypt the symmetric key using HE
     This function is adapted from https://github.com/IAIK/hybrid-HE-framework/blob/master/ciphers/pasta_3/seal/pasta_3_seal.cpp
     */
-    void decomposition (pasta::PASTA_SEAL &HHE,
-                        const std::vector<seal::Ciphertext> &c_k,  // the client's HE encrypted symmetric key
-                        const std::vector<std::vector<uint64_t>> &c_ims,  // the client's symmetric encrypted images
-                        std::vector<seal::Ciphertext> &c_prime,  // the HE encrypted images
-                        bool use_batch);
+    void decomposition(pasta::PASTA_SEAL &HHE,
+                       const std::vector<seal::Ciphertext> &c_k,        // the client's HE encrypted symmetric key
+                       const std::vector<std::vector<uint64_t>> &c_ims, // the client's symmetric encrypted images
+                       std::vector<seal::Ciphertext> &c_prime,          // the HE encrypted images
+                       bool use_batch);
 
-}  // namespace pastahelper
+} // namespace pastahelper

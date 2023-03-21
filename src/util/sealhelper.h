@@ -51,10 +51,22 @@ namespace sealhelper
     /*
     Helper function: Decrypt a SEAL Ciphertext.
     */
-    std::vector<uint64_t> decrypting(const seal::Ciphertext &enc_input,
-                                     const seal::SecretKey &he_sk,
-                                     const seal::BatchEncoder &benc,
-                                     const seal::SEALContext &context,
-                                     size_t size);
+    std::vector<int64_t> decrypting(const seal::Ciphertext &enc_input,
+                                    const seal::SecretKey &he_sk,
+                                    const seal::BatchEncoder &benc,
+                                    const seal::SEALContext &context,
+                                    size_t size);
+    /*
+    Helper function: multiply 2 SEAL Ciphertexts.
+    */
+    void packed_enc_multiply(const seal::Ciphertext &encrypted1,
+                             const seal::Ciphertext &encrypted2,
+                             seal::Ciphertext &destination,
+                             const seal::Evaluator &evaluator);
+
+    // void packed_enc_addition(const seal::Ciphertext &encrypted1,
+    //                          const seal::Ciphertext &encrypted2,
+    //                          seal::Ciphertext &destination,
+    //                          const seal::Evaluator &evaluator);
 
 } // end of sealhelper namespace
