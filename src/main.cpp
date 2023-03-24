@@ -12,7 +12,7 @@ int main()
     // pktnn_examples::fc_int_dfa_mnist_one_layer_inference(); // inference on MNIST using model trained with direct feedback alignment (only 1 layer)
 
     // pktnn_examples::fc_int_dfa_ecg_one_layer(); // training on MIT-BIH using direct feedback alignment for the 1-layer nn
-    // pktnn_examples::fc_int_dfa_ecg_one_layer_inference(); // inference on MIT-BIH for the 1-layer nn
+    pktnn_examples::fc_int_dfa_ecg_one_layer_inference(); // inference on MIT-BIH for the 1-layer nn
 
     // --- HHE examples ---
     // hhe_pktnn_examples::hhe_pktnn_mnist_inference();  // encrypted inference protocol on MNIST for the 1-layer nn

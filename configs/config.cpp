@@ -5,9 +5,11 @@
 
 namespace config
 {
+    // General parameters
     bool debugging = false;
-    bool verbose = true;
-    int dry_run = 2; // only run the first dry_run samples. Set to 0 to run the whole dataset
+    bool verbose = false;
+    int dry_run = true;           // if true, only run a few examples
+    int dry_run_num_samples = 20; // num samples to run when dry_run is true
     // HE parameters
     uint64_t plain_mod = 65537; // 2^16 + 1
     uint64_t mod_degree = 16384;

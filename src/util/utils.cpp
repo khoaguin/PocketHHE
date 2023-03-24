@@ -1,7 +1,8 @@
 #include "utils.h"
 
-namespace utils {
-    /*  
+namespace utils
+{
+    /*
     Helper function: Prints the name of the example in a fancy banner.
     */
     void print_example_banner(std::string title)
@@ -13,7 +14,10 @@ namespace utils {
             std::string banner_top = "+" + std::string(banner_length - 2, '-') + "+";
             std::string banner_middle = "|" + std::string(9, ' ') + title + std::string(9, ' ') + "|";
 
-            std::cout << std::endl << banner_top << std::endl << banner_middle << std::endl << banner_top << std::endl;
+            std::cout << std::endl
+                      << banner_top << std::endl
+                      << banner_middle << std::endl
+                      << banner_top << std::endl;
         }
     }
 
@@ -28,12 +32,61 @@ namespace utils {
     /*
     Helper function: Turn a vector of int64_t that contains positive integers into uint64_t.
     */
-    std::vector<uint64_t> int64_to_uint64(std::vector<int64_t> vec) {
+    std::vector<uint64_t> int64_to_uint64(std::vector<int64_t> vec)
+    {
         std::vector<uint64_t> result;
-        for (auto i : vec) {
+        for (auto i : vec)
+        {
             result.push_back(static_cast<uint64_t>(i));
         }
         return result;
+    }
+
+    /*
+        Helper function: A simple pocket sigmoid function
+        according to the PocketNN paper.
+            1 (𝑥 ≤ −128)
+            𝑥/8 + 20 (−128 < 𝑥 ≤ −75)
+            𝑥/2 + 48 (−75 < 𝑥 ≤ −32)
+            𝑥 + 64 (−32 < 𝑥 ≤ 31)
+            𝑥/2 + 80 (31 < 𝑥 ≤ 74)
+            𝑥/8 + 108 (74 < 𝑥 ≤ 127)
+            127 (127 < 𝑥)
+    */
+    int simple_pocket_sigmoid(int x)
+    {
+        int y = 0;
+
+        if (x < -127)
+        {
+            y = 1;
+        }
+        else if (x < -74)
+        {
+            y = x / 8 + 20;
+        }
+        else if (x < -31)
+        {
+            y = x / 2 + 48;
+        }
+        else if (x < 32)
+        {
+            y = x + 64;
+        }
+        else if (x < 75)
+        {
+            y = x / 2 + 80;
+        }
+        else if (x < 128)
+        {
+            y = x / 8 + 108;
+        }
+        else
+        {
+            y = 127;
+        }
+
+        return y;
     }
 
 }

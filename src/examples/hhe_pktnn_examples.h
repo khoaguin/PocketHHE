@@ -18,8 +18,10 @@ namespace hhe_pktnn_examples
 {
     struct Analyst
     {
-        pktnn::pktmat weight;                     // plaintext weight
-        pktnn::pktmat bias;                       // plaintext bias
+        // the model weights and bias in plaintext
+        pktnn::pktmat weight; // plaintext weight
+        pktnn::pktmat bias;   // plaintext bias
+        // the model weights and bias in ciphertext
         std::vector<seal::Ciphertext> enc_weight; // the encrypted weight
         std::vector<seal::Ciphertext> enc_bias;   // the encrypted bias
         // the HE keys
@@ -27,6 +29,12 @@ namespace hhe_pktnn_examples
         seal::SecretKey he_sk;
         seal::RelinKeys he_rk;
         seal::GaloisKeys he_gk;
+        // the HE encrypted results from the csp
+        std::vector<seal::Ciphertext> enc_results;
+        // the HE decrypted results
+        std::vector<std::vector<int64_t>> dec_results;
+        // the final predictions
+        std::vector<int64_t> predictions;
     };
 
     struct Client
@@ -58,7 +66,7 @@ namespace hhe_pktnn_examples
         // user's symmetric encrypted test data
         std::vector<seal::Ciphertext> c_primes;
         // the HE encrypted results that will be sent to the Analyst
-        seal::Ciphertext c_res;
+        std::vector<seal::Ciphertext> enc_results;
     };
 
     /*

@@ -803,22 +803,40 @@ namespace pktnn_examples
         ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
         ecgTestLabels.printShape();
 
+        pktnn::pktmat testData;
+        pktnn::pktmat testLabels;
+        int dryRunNumSamples = config::dry_run_num_samples;
+
+        if (config::dry_run) // get a slice of dry_run data samples
+        {
+            std::cout << "Dry run: get a slice of " << dryRunNumSamples << " data samples"
+                      << "\n";
+            testData.sliceOf(ecgTestInput, 0, dryRunNumSamples - 1, 0, 127);
+            testLabels.sliceOf(ecgTestLabels, 0, dryRunNumSamples - 1, 0, 0);
+        }
+        else // run the whole dataset
+        {
+            dryRunNumSamples = numTestSamples;
+            testData = ecgTestInput;
+            testLabels = ecgTestLabels;
+        }
+
         std::cout << "----- Test -----\n";
-        fc1.forward(ecgTestInput);
+        fc1.forward(testData);
         int testNumCorrect = 0;
-        for (int r = 0; r < numTestSamples; ++r)
+        for (int r = 0; r < dryRunNumSamples; ++r)
         {
             int output_row_r = 0;
             fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
 
-            if (ecgTestLabels.getElem(r, 0) == output_row_r)
+            if (testLabels.getElem(r, 0) == output_row_r)
             {
                 ++testNumCorrect;
             }
         }
-        float test_acc = testNumCorrect * 1.0 / numTestSamples;
+        float test_acc = testNumCorrect * 1.0 / dryRunNumSamples;
         std::cout << "Final test numCorrect = " << testNumCorrect << " (out of "
-                  << numTestSamples << " total examples)"
+                  << dryRunNumSamples << " total examples)"
                   << "\n";
         std::cout << "Final test accuracy = " << test_acc * 100 << "%"
                   << "\n";

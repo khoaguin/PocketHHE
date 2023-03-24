@@ -331,7 +331,7 @@ namespace hhe_pktnn_examples
                                                         analyst.he_pk,
                                                         analyst_he_benc,
                                                         analyst_he_enc);
-        std::cout << "Encrypt the bias...";
+        std::cout << "Encrypt the weight...";
         std::cout << "The encrypted weight vector has " << analyst.enc_weight.size() << " ciphertexts\n";
         ecg_test::test_encrypted_weight(analyst.enc_weight,
                                         fc_weight_t,
@@ -378,12 +378,13 @@ namespace hhe_pktnn_examples
                                         numTestSamples, config::debugging);
         ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
 
-        if (config::dry_run > 0) // get a slice of dry_run data samples
+        if (config::dry_run) // get a slice of dry_run data samples
         {
-            std::cout << "Dry run: get a slice of " << config::dry_run << " data samples"
+            int dryRunNumSamples = config::dry_run_num_samples;
+            std::cout << "Dry run: get a slice of " << dryRunNumSamples << " data samples"
                       << "\n";
-            client.testData.sliceOf(ecgTestInput, 0, config::dry_run - 1, 0, 127);
-            client.testLabels.sliceOf(ecgTestLabels, 0, config::dry_run - 1, 0, 0);
+            client.testData.sliceOf(ecgTestInput, 0, dryRunNumSamples - 1, 0, 127);
+            client.testLabels.sliceOf(ecgTestLabels, 0, dryRunNumSamples - 1, 0, 0);
         }
         else
         {
@@ -396,7 +397,8 @@ namespace hhe_pktnn_examples
         client.testLabels.printShape();
 
         // client.testData.printMat();
-        // client.testLabels.printMat();
+        if (config::verbose)
+            client.testLabels.printMat();
 
         utils::print_line(__LINE__);
         std::cout << "Client creates the symmetric key" << std::endl;
@@ -440,8 +442,8 @@ namespace hhe_pktnn_examples
             std::vector<seal::Ciphertext> c_prime = HHE.decomposition(c, csp.c_k, config::USE_BATCH);
             if (c_prime.size() == 1)
             {
-                // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key to see
-                // if the decryption is same as the plaintext data of the client
+                // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key
+                // to check if the decryption is same as the plaintext data of the client
                 // std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
                 // utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ");
                 csp.c_primes.push_back(c_prime[0]);
@@ -460,13 +462,12 @@ namespace hhe_pktnn_examples
         {
             seal::Ciphertext enc_result;
             sealhelper::packed_enc_multiply(c_prime, csp.enc_weight[0], enc_result, analyst_he_eval);
-            // --- for debugging: decrypt the result with the analyst's secret key
-            // std::vector<int64_t> dec_result = sealhelper::decrypting(enc_result, analyst.he_sk, analyst_he_benc, *context, 128);
-            // utils::print_vec(dec_result, dec_result.size(), "decrypted result ");
+            csp.enc_results.push_back(enc_result);
         }
 
         utils::print_line(__LINE__);
         std::cout << "CSP sends the HE encrypted result to the analyst" << std::endl;
+        analyst.enc_results = csp.enc_results;
 
         // The Analyst
         std::cout << "\n";
@@ -475,9 +476,46 @@ namespace hhe_pktnn_examples
                   << "\n";
         utils::print_line(__LINE__);
         std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
+        for (seal::Ciphertext enc_result : analyst.enc_results)
+        {
+            std::vector<int64_t> dec_result = sealhelper::decrypting(enc_result,
+                                                                     analyst.he_sk,
+                                                                     analyst_he_benc,
+                                                                     *context,
+                                                                     128);
+            analyst.dec_results.push_back(dec_result);
+            // utils::print_vec(dec_result, dec_result.size(), "decrypted result ");
+        }
 
         utils::print_line(__LINE__);
         std::cout << "The analyst applies the non-linear operations on the decrypted results and get the final predictions" << std::endl;
+        for (std::vector<int64_t> dec_result : analyst.dec_results)
+        {
+            // first find the sum of the decrypted results
+            int sum = 0;
+            for (auto i : dec_result)
+                sum += i;
+            // then apply the pocket sigmoid function (let's ignore the bias for now)
+            int out = utils::simple_pocket_sigmoid(sum);
+            // the final prediction
+            int final_pred = 0;
+            out > 64 ? final_pred = 128 : final_pred = 0;
+            if (config::verbose)
+                std::cout << "final prediction = " << final_pred << "\n";
+            // add the prediction to the analyst's predictions
+            analyst.predictions.push_back(final_pred);
+        }
+
+        // find the accuracy
+        int testNumCorrect = 0;
+        for (int i = 0; i < analyst.predictions.size(); ++i)
+        {
+            if (client.testLabels.getElem(i, 0) == analyst.predictions[i])
+            {
+                ++testNumCorrect;
+            }
+        }
+        std::cout << "encrypted accuracy = " << (double)testNumCorrect / analyst.predictions.size() << "\n";
 
         return 0;
     }
