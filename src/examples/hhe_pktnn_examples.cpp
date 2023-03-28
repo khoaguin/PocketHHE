@@ -319,6 +319,9 @@ namespace hhe_pktnn_examples
         // get the weights and biases to encrypt later
         analyst.weight = fc.getWeight();
         analyst.bias = fc.getBias();
+        // divide bias by 128
+        int old_bias = analyst.bias.getElem(0, 0);
+        analyst.bias.setElem(0, 0, (int)old_bias / 128);
         // analyst.weight.printMat();
         // analyst.bias.printMat();
 
@@ -443,7 +446,7 @@ namespace hhe_pktnn_examples
 
                 // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key
                 // to check if the decryption is same as the plaintext data of the client
-                std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
+                // std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
                 // utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ", "\n");
             }
             else
@@ -460,6 +463,8 @@ namespace hhe_pktnn_examples
         {
             seal::Ciphertext enc_result;
             sealhelper::packed_enc_multiply(c_prime, csp.enc_weight[0], enc_result, analyst_he_eval);
+            // we only do element-wise multiplication for now and ignore the
+            // bias for simplication as it does not affect the result
             csp.enc_results.push_back(enc_result);
         }
 
@@ -494,12 +499,9 @@ namespace hhe_pktnn_examples
             for (auto i : dec_result)
             {
                 sum += i;
-                // std::cout << i << " "
-                //           << " | sum = " << sum << "\n";
             }
             // std::cout << "sum = " << sum << "\n";
-            // sum += analyst.bias.getElem(0, 0); // add the bias
-            // then apply the pocket sigmoid function
+            // apply the pocket sigmoid function
             int out = utils::simple_pocket_sigmoid(sum);
             // the final prediction
             int final_pred = 0;
@@ -523,7 +525,8 @@ namespace hhe_pktnn_examples
         std::cout << "Final correct predions = " << testNumCorrect << " (out of "
                   << analyst.predictions.size() << " total examples)"
                   << "\n";
-        std::cout << "Encrypted accuracy = " << (double)testNumCorrect / analyst.predictions.size() << "\n";
+        std::cout << "Encrypted accuracy = "
+                  << (double)testNumCorrect / analyst.predictions.size() * 100 << "% \n";
 
         return 0;
     }
