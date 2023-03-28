@@ -137,6 +137,10 @@ pktfc &pktfc::forward(pktmat &xMat)
 {
     mInput = &xMat;
     mInter.matMulMat(*mInput, mWeight); // (N, Dk) = (N, Dk-1) * (Dk-1, Dk)
+    // mInput->printMat();
+    // mWeight.printMat();
+    // mInter.printMat();
+
     if (mUseBn)
     {
         batchNormalization();

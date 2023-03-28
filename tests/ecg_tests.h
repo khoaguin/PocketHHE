@@ -3,6 +3,7 @@
 #include <seal/seal.h>
 #include <pocketnn/pktnn.h>
 #include "../src/util/sealhelper.h"
+#include "../src/util/utils.h"
 
 namespace ecg_test
 {

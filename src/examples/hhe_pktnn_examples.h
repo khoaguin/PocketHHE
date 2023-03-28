@@ -70,13 +70,13 @@ namespace hhe_pktnn_examples
     };
 
     /*
-        Work in Progress
-    */
-    int hhe_pktnn_mnist_inference();
-
-    /*
         Work in Progess
     */
     int hhe_pktnn_ecg_inference();
+
+    /*
+        Work in Progress
+    */
+    int hhe_pktnn_mnist_inference();
 
 } // end of hhe_pktnn_examples namespace

@@ -529,13 +529,13 @@ pktmat &pktmat::fastReturn()
     return setDeleteOnDestruct(false);
 }
 
-pktmat &pktmat::printMat(std::ostream &outTo)
+pktmat &pktmat::printMat(std::ostream &outTo, std::string separator)
 {
     for (int i = 0; i < mRows; ++i)
     {
         for (int j = 0; j < mCols; ++j)
         {
-            outTo << mMat[i][j] << " ";
+            outTo << mMat[i][j] << separator;
         }
         outTo << "\n";
     }
@@ -555,6 +555,10 @@ pktmat &pktmat::matMulMat(pktmat &mat1, pktmat &mat2)
     // ASSUMPTION: this is NOT in-place
     assert(mat1.mCols == mat2.mRows); // (1, Dk) * (N, Dk)??
     assert((this != &mat1) && (this != &mat2));
+    // std::cout << "mat1: " << mat1.mRows << " " << mat1.mCols << "\n";
+    // mat1.printMat();
+    // std::cout << "mat2: " << mat2.mRows << " " << mat2.mCols << "\n";
+    // mat2.printMat();
 
     resetZero(mat1.mRows, mat2.mCols);
     for (int r1 = 0; r1 < mat1.mRows; ++r1)
@@ -567,6 +571,9 @@ pktmat &pktmat::matMulMat(pktmat &mat1, pktmat &mat2)
             {
                 prevTotal = total;
                 total += (mat1.mMat[r1][c1_r2] * mat2.mMat[c1_r2][c2]);
+                // std::cout << mat1.mMat[r1][c1_r2] << " * " << mat2.mMat[c1_r2][c2] << " = "
+                //           << mat1.mMat[r1][c1_r2] * mat2.mMat[c1_r2][c2] << "| total = " << total << "\n";
+                // std::cout << mat1.mMat[r1][c1_r2] * mat2.mMat[c1_r2][c2] << "\n";
                 // debug
                 if (mat1.mMat[r1][c1_r2] * mat2.mMat[c1_r2][c2] > 0)
                 {
@@ -577,6 +584,7 @@ pktmat &pktmat::matMulMat(pktmat &mat1, pktmat &mat2)
                 }
             }
             mMat[r1][c2] = total;
+            // std::cout << "total = " << total << std::endl;
         }
     }
 

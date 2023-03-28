@@ -58,33 +58,19 @@ namespace utils
         int y = 0;
 
         if (x < -127)
-        {
             y = 1;
-        }
         else if (x < -74)
-        {
             y = x / 8 + 20;
-        }
         else if (x < -31)
-        {
             y = x / 2 + 48;
-        }
         else if (x < 32)
-        {
             y = x + 64;
-        }
         else if (x < 75)
-        {
             y = x / 2 + 80;
-        }
         else if (x < 128)
-        {
             y = x / 8 + 108;
-        }
         else
-        {
             y = 127;
-        }
 
         return y;
     }

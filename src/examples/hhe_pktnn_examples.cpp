@@ -393,12 +393,9 @@ namespace hhe_pktnn_examples
         }
         std::cout << "Test data shape: ";
         client.testData.printShape();
+        // client.testData.printMat();
         std::cout << "Test labels shape: ";
         client.testLabels.printShape();
-
-        // client.testData.printMat();
-        if (config::verbose)
-            client.testLabels.printMat();
 
         utils::print_line(__LINE__);
         std::cout << "Client creates the symmetric key" << std::endl;
@@ -442,22 +439,23 @@ namespace hhe_pktnn_examples
             std::vector<seal::Ciphertext> c_prime = HHE.decomposition(c, csp.c_k, config::USE_BATCH);
             if (c_prime.size() == 1)
             {
+                csp.c_primes.push_back(c_prime[0]);
+
                 // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key
                 // to check if the decryption is same as the plaintext data of the client
-                // std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
-                // utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ");
-                csp.c_primes.push_back(c_prime[0]);
+                std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
+                // utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ", "\n");
             }
             else
             {
-                std::cout << "there are more than 1 ciphertexts in the decomposed ciphertexts\n";
+                std::cout << "there are more than 1 seal ciphertexts in the each decomposed ciphertext\n";
                 std::cout << "we need to do some post-processing\n";
             }
         }
         std::cout << "There are " << csp.c_primes.size() << " decomposed HE ciphertexts\n";
 
         utils::print_line(__LINE__);
-        std::cout << "CSP evaluates the HE encrypted weights & biases on the HE encrypted data" << std::endl;
+        std::cout << "CSP evaluates the HE encrypted weights (& biases) on the HE encrypted data" << std::endl;
         for (seal::Ciphertext c_prime : csp.c_primes)
         {
             seal::Ciphertext enc_result;
@@ -484,7 +482,7 @@ namespace hhe_pktnn_examples
                                                                      *context,
                                                                      128);
             analyst.dec_results.push_back(dec_result);
-            // utils::print_vec(dec_result, dec_result.size(), "decrypted result ");
+            // utils::print_vec(dec_result, dec_result.size(), "decrypted result ", ", ");
         }
 
         utils::print_line(__LINE__);
@@ -494,14 +492,18 @@ namespace hhe_pktnn_examples
             // first find the sum of the decrypted results
             int sum = 0;
             for (auto i : dec_result)
+            {
                 sum += i;
-            // then apply the pocket sigmoid function (let's ignore the bias for now)
+                // std::cout << i << " "
+                //           << " | sum = " << sum << "\n";
+            }
+            // std::cout << "sum = " << sum << "\n";
+            // sum += analyst.bias.getElem(0, 0); // add the bias
+            // then apply the pocket sigmoid function
             int out = utils::simple_pocket_sigmoid(sum);
             // the final prediction
             int final_pred = 0;
             out > 64 ? final_pred = 128 : final_pred = 0;
-            if (config::verbose)
-                std::cout << "final prediction = " << final_pred << "\n";
             // add the prediction to the analyst's predictions
             analyst.predictions.push_back(final_pred);
         }
@@ -510,12 +512,18 @@ namespace hhe_pktnn_examples
         int testNumCorrect = 0;
         for (int i = 0; i < analyst.predictions.size(); ++i)
         {
+            if (config::verbose)
+                std::cout << "Prediction = " << analyst.predictions[i]
+                          << "| Actual = " << client.testLabels.getElem(i, 0) << "\n";
             if (client.testLabels.getElem(i, 0) == analyst.predictions[i])
             {
                 ++testNumCorrect;
             }
         }
-        std::cout << "encrypted accuracy = " << (double)testNumCorrect / analyst.predictions.size() << "\n";
+        std::cout << "Final correct predions = " << testNumCorrect << " (out of "
+                  << analyst.predictions.size() << " total examples)"
+                  << "\n";
+        std::cout << "Encrypted accuracy = " << (double)testNumCorrect / analyst.predictions.size() << "\n";
 
         return 0;
     }

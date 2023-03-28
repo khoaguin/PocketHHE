@@ -28,10 +28,10 @@ namespace config
     int epoch = 50;
     int mini_batch_size = 4; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 50;
-    int weight_lower_bound = -255;
-    int weight_upper_bound = 256;
-    std::string save_weight_path = "weights/ecg/fc1_weight_50epochs_bz4.csv";
-    std::string save_bias_path = "weights/ecg/fc1_bias_50epochs_bs4.csv";
+    int weight_lower_bound = -2047;
+    int weight_upper_bound = 2048;
+    std::string save_weight_path = "weights/ecg_2048/fc1_weight_50epochs_bz4.csv";
+    std::string save_bias_path = "weights/ecg_2048/fc1_bias_50epochs_bs4.csv";
     // Parameters to run experiments
     // uint64_t NUM_RUN = 50;
     // uint64_t NUM_VEC = 1;

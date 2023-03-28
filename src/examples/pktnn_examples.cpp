@@ -797,11 +797,11 @@ namespace pktnn_examples
 
         pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
                                       numTestSamples, config::debugging);
-        ecgTestInput.printShape();
+        // ecgTestInput.printShape();
         pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
                                         numTestSamples, config::debugging);
         ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
-        ecgTestLabels.printShape();
+        // ecgTestLabels.printShape();
 
         pktnn::pktmat testData;
         pktnn::pktmat testLabels;
@@ -820,6 +820,11 @@ namespace pktnn_examples
             testData = ecgTestInput;
             testLabels = ecgTestLabels;
         }
+
+        std::cout << "Testing on datasets with shape:"
+                  << "\n";
+        testData.printShape();
+        testLabels.printShape();
 
         std::cout << "----- Test -----\n";
         fc1.forward(testData);

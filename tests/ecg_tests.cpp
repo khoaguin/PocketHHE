@@ -12,6 +12,7 @@ namespace ecg_test
         pktnn::pktmat dec_weight_t = sealhelper::decrypt_weight(enc_weight, he_sk, benc, dec, vec_size);
         std::vector<int64_t> decrypted_row;
         decrypted_row = dec_weight_t.getRow(0);
+        // utils::print_vec(decrypted_row, 128, "decrypted row", ",\n");
         std::vector<int64_t> org_row = original_weight.getRow(0);
         assert(decrypted_row == org_row);
         return 0;
