@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 #include <pocketnn/pktnn.h>
 #include <seal/seal.h>

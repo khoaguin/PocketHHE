@@ -776,6 +776,14 @@ namespace pktnn_examples
     int fc_int_dfa_ecg_one_layer_inference()
     {
         utils::print_example_banner("PocketNN: Inference on plaintext MIT-BIH ECG data using pretrained weights for the 1-layer network");
+
+        std::chrono::high_resolution_clock::time_point start_0, end_0;
+        std::chrono::milliseconds time_0;
+        size_t total_time = 0;
+        size_t total_comm = 0;
+
+        start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+
         std::cout << "----- Constructing the network -----\n";
         pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_sigmoid;
         pktnn::pktfc fc1(128, 1);
@@ -840,6 +848,13 @@ namespace pktnn_examples
             }
         }
         float test_acc = testNumCorrect * 1.0 / dryRunNumSamples;
+
+        end_0 = std::chrono::high_resolution_clock::now(); // End the timer
+        time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(end_0 - start_0);
+        total_time += time_0.count();
+
+        std::cout << "Total time = " << total_time << " ms"
+                  << "\n";
         std::cout << "Final test numCorrect = " << testNumCorrect << " (out of "
                   << dryRunNumSamples << " total examples)"
                   << "\n";

@@ -16,7 +16,7 @@ int main()
 
     // --- HHE examples ---
     // hhe_pktnn_examples::hhe_pktnn_mnist_inference();  // encrypted inference protocol on MNIST for the 1-layer nn
-    hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
+    // hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
 
     return 0;
 }
