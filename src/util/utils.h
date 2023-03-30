@@ -47,4 +47,5 @@ namespace utils
         127 (127 < 𝑥)
     */
     int simple_pocket_sigmoid(int x);
+
 }

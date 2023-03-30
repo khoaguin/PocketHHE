@@ -49,4 +49,9 @@ namespace pastahelper
                        std::vector<seal::Ciphertext> &c_prime,          // the HE encrypted images
                        bool use_batch);
 
+    /*
+    Calculate the size of the symmetric encrypted data (in MB)
+    */
+    size_t sym_enc_data_size(std::vector<std::vector<uint64_t>> cs, bool verbose = false);
+
 } // namespace pastahelper

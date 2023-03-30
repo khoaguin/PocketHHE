@@ -276,7 +276,7 @@ namespace hhe_pktnn_examples
         Client client;
         CSP csp;
 
-        // The Analyst
+        // ---------------------- Analyst ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Analyst ----------------------"
@@ -358,16 +358,18 @@ namespace hhe_pktnn_examples
         csp.he_gk = analyst.he_gk;
         csp.he_pk = analyst.he_pk;
         csp.he_rk = analyst.he_rk;
-        std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
-                  << "\n";
-        csp.enc_weight = analyst.enc_weight;
-        csp.enc_bias = analyst.enc_bias;
-
         // calculate the commnication overhead (in MB)
         size_t he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
         std::cout << "The total size of the HE keys is " << he_keys_size << " Mb" << std::endl;
 
-        // The Client (Data Owner)
+        std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
+                  << "\n";
+        csp.enc_weight = analyst.enc_weight;
+        csp.enc_bias = analyst.enc_bias;
+        // calculate the size of encrypted weights and biases (in MB)
+        size_t enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
+
+        // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Client (Data Owner) ----------------------"
@@ -421,12 +423,15 @@ namespace hhe_pktnn_examples
         std::cout << "The symmetric encrypted data has " << client.cs.size() << " ciphertexts\n";
 
         utils::print_line(__LINE__);
-        std::cout << "The client sends the encrypted data and the HE encrypted symmetric key to the CSP..."
+        std::cout << "The client sends the symmetric encrypted data and the HE encrypted symmetric key to the CSP..."
                   << "\n";
         csp.c_k = client.c_k;
         csp.cs = client.cs;
+        // calculate the size of the symmetric encrypted data and HE encrypted symmetric key (in MB)
+        size_t sym_enc_data_size = pastahelper::sym_enc_data_size(client.cs, true);
+        size_t he_enc_sym_key_size = sealhelper::he_vec_size(client.c_k, true, "HE encrypted symmetric key");
 
-        // The Cloud Service Provider (CSP)
+        // -------------------------- CSP (server) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "-------------------------- CSP ----------------------" << std::endl;
@@ -475,8 +480,9 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "CSP sends the HE encrypted result to the analyst" << std::endl;
         analyst.enc_results = csp.enc_results;
+        size_t enc_results_size = sealhelper::he_vec_size(analyst.enc_results, true, "HE encrypted results");
 
-        // The Analyst
+        // ---------------------- Analyst (again) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Analyst ----------------------"
@@ -526,11 +532,18 @@ namespace hhe_pktnn_examples
                 ++testNumCorrect;
             }
         }
+
+        // ---------------------- Experiment results ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Results ----------------------"
+                  << "\n";
         std::cout << "Final correct predions = " << testNumCorrect << " (out of "
                   << analyst.predictions.size() << " total examples)"
                   << "\n";
         std::cout << "Encrypted accuracy = "
                   << (double)testNumCorrect / analyst.predictions.size() * 100 << "% \n";
+        // print out communication and computation costs here
 
         return 0;
     }
