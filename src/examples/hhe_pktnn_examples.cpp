@@ -363,6 +363,10 @@ namespace hhe_pktnn_examples
         csp.enc_weight = analyst.enc_weight;
         csp.enc_bias = analyst.enc_bias;
 
+        // calculate the commnication overhead (in MB)
+        size_t he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
+        std::cout << "The total size of the HE keys is " << he_keys_size << " Mb" << std::endl;
+
         // The Client (Data Owner)
         std::cout << "\n";
         utils::print_line(__LINE__);

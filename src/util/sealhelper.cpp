@@ -219,4 +219,27 @@ namespace sealhelper
         evaluator.multiply(encrypted1, encrypted2, destination);
     }
 
+    /*
+    Calculate the HE keys size in MB
+    */
+    size_t he_key_size(seal::PublicKey he_pk,
+                       seal::RelinKeys he_rk,
+                       seal::GaloisKeys he_gk,
+                       bool verbose)
+    {
+        std::stringstream pks, rks, gks;
+        size_t pk_size = he_pk.save(pks);
+        size_t rk_size = he_rk.save(pks);
+        size_t gk_size = he_gk.save(pks);
+
+        if (verbose)
+        {
+            std::cout << "The size of the HE public key is " << pk_size * 1e-6 << " Mb" << std::endl;
+            std::cout << "The size of the HE relin key is " << rk_size * 1e-6 << " Mb" << std::endl;
+            std::cout << "The size of the HE galois key is " << gk_size * 1e-6 << " Mb" << std::endl;
+        }
+
+        return (pk_size + rk_size + gk_size) * 1e-6;
+    };
+
 } // end of sealhelper namespace

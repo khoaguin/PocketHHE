@@ -69,4 +69,12 @@ namespace sealhelper
     //                          seal::Ciphertext &destination,
     //                          const seal::Evaluator &evaluator);
 
+    /*
+    Calculate the HE keys size in MB
+    */
+    size_t he_key_size(seal::PublicKey he_pk,
+                       seal::RelinKeys he_rk,
+                       seal::GaloisKeys he_gk,
+                       bool verbose = false);
+
 } // end of sealhelper namespace
