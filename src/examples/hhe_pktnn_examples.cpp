@@ -565,15 +565,6 @@ namespace hhe_pktnn_examples
                   << (double)testNumCorrect / analyst.predictions.size() * 100 << "% \n";
         // print out communication and computation costs here
         utils::print_line(__LINE__);
-        std::cout << "Communication cost: " << std::endl;
-        std::cout << "Client - CSP: " << sym_enc_data_size + he_enc_sym_key_size << " (Mb)" << std::endl;
-        std::cout << "Client - Analyst: " << he_pk_size << " (Mb)" << std::endl;
-        std::cout << "Analyst - CSP: " << he_keys_size + enc_weight_bias_size + enc_results_size << " (Mb)" << std::endl;
-        float total_comm = sym_enc_data_size + he_enc_sym_key_size + he_pk_size +
-                           he_keys_size + enc_weight_bias_size + enc_results_size;
-        std::cout << "Total communication cost: " << total_comm << " (Mb)" << std::endl;
-
-        utils::print_line(__LINE__);
         std::cout << "Computation cost: " << std::endl;
         size_t analyst_time_ms = analyst_time_0.count() + analyst_time_1.count();
         size_t total_time = client_time_0.count() + analyst_time_ms + csp_time_0.count();
@@ -581,6 +572,15 @@ namespace hhe_pktnn_examples
         utils::print_time("Client", client_time_0.count());
         utils::print_time("CSP", csp_time_0.count());
         utils::print_time("Total", total_time);
+
+        utils::print_line(__LINE__);
+        std::cout << "Communication cost: " << std::endl;
+        std::cout << "Analyst - Client : " << he_pk_size << " (Mb)" << std::endl;
+        std::cout << "Client - CSP: " << sym_enc_data_size + he_enc_sym_key_size << " (Mb)" << std::endl;
+        std::cout << "Analyst - CSP: " << he_keys_size + enc_weight_bias_size + enc_results_size << " (Mb)" << std::endl;
+        float total_comm = sym_enc_data_size + he_enc_sym_key_size + he_pk_size +
+                           he_keys_size + enc_weight_bias_size + enc_results_size;
+        std::cout << "Total communication cost: " << total_comm << " (Mb)" << std::endl;
 
         return 0;
     }
