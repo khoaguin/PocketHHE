@@ -276,11 +276,19 @@ namespace hhe_pktnn_examples
         Client client;
         CSP csp;
 
+        // calculate the time (computation cost)
+        std::chrono::high_resolution_clock::time_point analyst_start_0, analyst_end_0, analyst_start_1, analyst_end_1;
+        std::chrono::high_resolution_clock::time_point client_start_0, client_end_0;
+        std::chrono::high_resolution_clock::time_point csp_start_0, csp_end_0;
+        std::chrono::milliseconds analyst_time_0, analyst_time_1, client_time_0, csp_time_0;
+
         // ---------------------- Analyst ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Analyst ----------------------"
                   << "\n";
+        analyst_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+
         std::cout << "Analyst constructs the HE context"
                   << "\n";
         std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context();
@@ -368,12 +376,15 @@ namespace hhe_pktnn_examples
         csp.enc_bias = analyst.enc_bias;
         // calculate the size of encrypted weights and biases (in MB)
         float enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
+        analyst_end_0 = std::chrono::high_resolution_clock::now();
+        analyst_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(analyst_end_0 - analyst_start_0);
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Client (Data Owner) ----------------------"
                   << "\n";
+        client_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
 
         utils::print_line(__LINE__);
         std::cout << "Client loads his ECG test data" << std::endl;
@@ -430,11 +441,14 @@ namespace hhe_pktnn_examples
         // calculate the size of the symmetric encrypted data and HE encrypted symmetric key (in MB)
         float sym_enc_data_size = pastahelper::sym_enc_data_size(client.cs, true);
         float he_enc_sym_key_size = sealhelper::he_vec_size(client.c_k, true, "HE encrypted symmetric key");
+        client_end_0 = std::chrono::high_resolution_clock::now();
+        client_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(client_end_0 - client_start_0);
 
         // -------------------------- CSP (server) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "-------------------------- CSP ----------------------" << std::endl;
+        csp_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
 
         utils::print_line(__LINE__);
         std::cout << "CSP runs the decomposition algorithm to turn the symmetric encrypted data into HE encrypted data" << std::endl;
@@ -481,12 +495,16 @@ namespace hhe_pktnn_examples
         std::cout << "CSP sends the HE encrypted result to the analyst" << std::endl;
         analyst.enc_results = csp.enc_results;
         float enc_results_size = sealhelper::he_vec_size(analyst.enc_results, true, "HE encrypted results");
+        csp_end_0 = std::chrono::high_resolution_clock::now();
+        csp_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(csp_end_0 - csp_start_0);
 
         // ---------------------- Analyst (again) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Analyst ----------------------"
                   << "\n";
+        analyst_start_1 = std::chrono::high_resolution_clock::now();
+
         utils::print_line(__LINE__);
         std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
         for (seal::Ciphertext enc_result : analyst.enc_results)
@@ -532,6 +550,8 @@ namespace hhe_pktnn_examples
                 ++testNumCorrect;
             }
         }
+        analyst_end_1 = std::chrono::high_resolution_clock::now();
+        analyst_time_1 = std::chrono::duration_cast<std::chrono::milliseconds>(analyst_end_1 - analyst_start_1);
 
         // ---------------------- Experiment results ----------------------
         std::cout << "\n";
@@ -555,9 +575,12 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "Computation cost: " << std::endl;
-        std::cout << "Client: " << 0 << " (ms)" << std::endl;
-        std::cout << "Analyst: " << 0 << " (ms)" << std::endl;
-        std::cout << "CSP: " << 0 << " (ms)" << std::endl;
+        size_t analyst_time_ms = analyst_time_0.count() + analyst_time_1.count();
+        size_t total_time = client_time_0.count() + analyst_time_ms + csp_time_0.count();
+        utils::print_time("Analyst", analyst_time_ms);
+        utils::print_time("Client", client_time_0.count());
+        utils::print_time("CSP", csp_time_0.count());
+        utils::print_time("Total", total_time);
 
         return 0;
     }

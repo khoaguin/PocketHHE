@@ -48,4 +48,9 @@ namespace utils
     */
     int simple_pocket_sigmoid(int x);
 
+    /*
+    Helper function to print time in ms, s, min, h.
+    */
+    void print_time(std::string name, size_t time_in_ms);
+
 }

@@ -74,4 +74,14 @@ namespace utils
 
         return y;
     }
+
+    /*
+    Helper function to print time in ms, s, min.
+    */
+    void print_time(std::string name, size_t time_in_ms)
+    {
+        std::cout << name << ": " << time_in_ms << " (ms) = "
+                  << (float)(time_in_ms)*1e-3 << " (s) = "
+                  << (float)(time_in_ms)*1e-3 / 60 << " (min)" << std::endl;
+    }
 }
