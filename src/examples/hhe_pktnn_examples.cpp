@@ -359,15 +359,15 @@ namespace hhe_pktnn_examples
         csp.he_pk = analyst.he_pk;
         csp.he_rk = analyst.he_rk;
         // calculate the commnication overhead (in MB)
-        size_t he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
-        std::cout << "The total size of the HE keys is " << he_keys_size << " Mb" << std::endl;
+        float he_pk_size = sealhelper::he_pk_key_size(analyst.he_pk, false);
+        float he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
 
         std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
                   << "\n";
         csp.enc_weight = analyst.enc_weight;
         csp.enc_bias = analyst.enc_bias;
         // calculate the size of encrypted weights and biases (in MB)
-        size_t enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
+        float enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
@@ -428,8 +428,8 @@ namespace hhe_pktnn_examples
         csp.c_k = client.c_k;
         csp.cs = client.cs;
         // calculate the size of the symmetric encrypted data and HE encrypted symmetric key (in MB)
-        size_t sym_enc_data_size = pastahelper::sym_enc_data_size(client.cs, true);
-        size_t he_enc_sym_key_size = sealhelper::he_vec_size(client.c_k, true, "HE encrypted symmetric key");
+        float sym_enc_data_size = pastahelper::sym_enc_data_size(client.cs, true);
+        float he_enc_sym_key_size = sealhelper::he_vec_size(client.c_k, true, "HE encrypted symmetric key");
 
         // -------------------------- CSP (server) ----------------------
         std::cout << "\n";
@@ -480,7 +480,7 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "CSP sends the HE encrypted result to the analyst" << std::endl;
         analyst.enc_results = csp.enc_results;
-        size_t enc_results_size = sealhelper::he_vec_size(analyst.enc_results, true, "HE encrypted results");
+        float enc_results_size = sealhelper::he_vec_size(analyst.enc_results, true, "HE encrypted results");
 
         // ---------------------- Analyst (again) ----------------------
         std::cout << "\n";
@@ -536,7 +536,7 @@ namespace hhe_pktnn_examples
         // ---------------------- Experiment results ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
-        std::cout << "---------------------- Results ----------------------"
+        std::cout << "---------------------- Experiment Results ----------------------"
                   << "\n";
         std::cout << "Final correct predions = " << testNumCorrect << " (out of "
                   << analyst.predictions.size() << " total examples)"
@@ -544,6 +544,20 @@ namespace hhe_pktnn_examples
         std::cout << "Encrypted accuracy = "
                   << (double)testNumCorrect / analyst.predictions.size() * 100 << "% \n";
         // print out communication and computation costs here
+        utils::print_line(__LINE__);
+        std::cout << "Communication cost: " << std::endl;
+        std::cout << "Client - CSP: " << sym_enc_data_size + he_enc_sym_key_size << " (Mb)" << std::endl;
+        std::cout << "Client - Analyst: " << he_pk_size << " (Mb)" << std::endl;
+        std::cout << "Analyst - CSP: " << he_keys_size + enc_weight_bias_size + enc_results_size << " (Mb)" << std::endl;
+        float total_comm = sym_enc_data_size + he_enc_sym_key_size + he_pk_size +
+                           he_keys_size + enc_weight_bias_size + enc_results_size;
+        std::cout << "Total communication cost: " << total_comm << " (Mb)" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Computation cost: " << std::endl;
+        std::cout << "Client: " << 0 << " (ms)" << std::endl;
+        std::cout << "Analyst: " << 0 << " (ms)" << std::endl;
+        std::cout << "CSP: " << 0 << " (ms)" << std::endl;
 
         return 0;
     }

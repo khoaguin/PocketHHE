@@ -220,35 +220,52 @@ namespace sealhelper
     }
 
     /*
+    Calculate the public HE key size in MB
+    */
+    float he_pk_key_size(seal::PublicKey he_pk,
+                         bool verbose)
+    {
+        std::stringstream pks;
+        size_t pk_size = he_pk.save(pks);
+        if (verbose)
+        {
+            std::cout << "The size of the HE public key is " << pk_size * 1e-6 << " Mb" << std::endl;
+        }
+        return (float)(pk_size * 1e-6);
+    }
+
+    /*
     Calculate the HE keys size in MB
     */
-    size_t he_key_size(seal::PublicKey he_pk,
-                       seal::RelinKeys he_rk,
-                       seal::GaloisKeys he_gk,
-                       bool verbose)
+    float he_key_size(seal::PublicKey he_pk,
+                      seal::RelinKeys he_rk,
+                      seal::GaloisKeys he_gk,
+                      bool verbose)
     {
         std::stringstream pks, rks, gks;
         size_t pk_size = he_pk.save(pks);
         size_t rk_size = he_rk.save(pks);
         size_t gk_size = he_gk.save(pks);
+        float total_keys_size = (float)((pk_size + rk_size + gk_size) * 1e-6);
 
         if (verbose)
         {
             std::cout << "The size of the HE public key is " << pk_size * 1e-6 << " Mb" << std::endl;
             std::cout << "The size of the HE relin key is " << rk_size * 1e-6 << " Mb" << std::endl;
             std::cout << "The size of the HE galois key is " << gk_size * 1e-6 << " Mb" << std::endl;
+            std::cout << "The total size of the HE keys is " << total_keys_size << " Mb" << std::endl;
         }
 
-        return (pk_size + rk_size + gk_size) * 1e-6;
+        return total_keys_size;
     };
 
     /*
     Calculate the HE encrypted weights and biases size in MB
     */
-    size_t enc_weight_bias_size(const std::vector<seal::Ciphertext> &enc_weight,
-                                const std::vector<seal::Ciphertext> &enc_bias,
-                                bool ignore_bias,
-                                bool verbose)
+    float enc_weight_bias_size(const std::vector<seal::Ciphertext> &enc_weight,
+                               const std::vector<seal::Ciphertext> &enc_bias,
+                               bool ignore_bias,
+                               bool verbose)
     {
         size_t enc_weight_size = 0;
         size_t enc_bias_size = 0;
@@ -275,15 +292,15 @@ namespace sealhelper
             }
         }
 
-        return (enc_weight_size + enc_bias_size) * 1e-6;
+        return (float)((enc_weight_size + enc_bias_size) * 1e-6);
     }
 
     /*
     Calculate the size of a vector of seal ciphertext in MB
     */
-    size_t he_vec_size(const std::vector<seal::Ciphertext> &enc_vec,
-                       bool verbose,
-                       std::string name)
+    float he_vec_size(const std::vector<seal::Ciphertext> &enc_vec,
+                      bool verbose,
+                      std::string name)
     {
         size_t total_size = 0;
         for (seal::Ciphertext c : enc_vec)
@@ -296,7 +313,7 @@ namespace sealhelper
         {
             std::cout << "The size of " << name << " is " << total_size * 1e-6 << " Mb" << std::endl;
         }
-        return total_size * 1e-6;
+        return (float)total_size * 1e-6;
     }
 
 } // end of sealhelper namespace

@@ -365,7 +365,7 @@ namespace pastahelper
         }
     }
 
-    size_t sym_enc_data_size(std::vector<std::vector<uint64_t>> cs, bool verbose)
+    float sym_enc_data_size(std::vector<std::vector<uint64_t>> cs, bool verbose)
     {
         size_t result = 0;
         for (std::vector<uint64_t> c : cs)
@@ -376,7 +376,7 @@ namespace pastahelper
         if (verbose)
             std::cout << "The size of the symmetric encrypted data is " << result * 1e-6 << " Mb" << std::endl;
 
-        return result * 1e-6;
+        return (float)result * 1e-6;
     }
 
 } // end of the pastahelper namespace

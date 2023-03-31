@@ -52,6 +52,6 @@ namespace pastahelper
     /*
     Calculate the size of the symmetric encrypted data (in MB)
     */
-    size_t sym_enc_data_size(std::vector<std::vector<uint64_t>> cs, bool verbose = false);
+    float sym_enc_data_size(std::vector<std::vector<uint64_t>> cs, bool verbose = false);
 
 } // namespace pastahelper

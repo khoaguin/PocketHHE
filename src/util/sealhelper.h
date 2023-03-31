@@ -70,26 +70,31 @@ namespace sealhelper
     //                          const seal::Evaluator &evaluator);
 
     /*
-    Calculate the HE keys size in MB
+    Calculate the public HE key size in MB
     */
-    size_t he_key_size(seal::PublicKey he_pk,
-                       seal::RelinKeys he_rk,
-                       seal::GaloisKeys he_gk,
-                       bool verbose = false);
+    float he_pk_key_size(seal::PublicKey he_pk,
+                         bool verbose = false);
+    /*
+    Calculate the total HE keys size in MB
+    */
+    float he_key_size(seal::PublicKey he_pk,
+                      seal::RelinKeys he_rk,
+                      seal::GaloisKeys he_gk,
+                      bool verbose = false);
 
     /*
     Calculate the size of a vector of seal ciphertext in MB
     */
-    size_t enc_weight_bias_size(const std::vector<seal::Ciphertext> &enc_weight,
-                                const std::vector<seal::Ciphertext> &enc_bias,
-                                bool ignore_bias = false,
-                                bool verbose = false);
+    float enc_weight_bias_size(const std::vector<seal::Ciphertext> &enc_weight,
+                               const std::vector<seal::Ciphertext> &enc_bias,
+                               bool ignore_bias = false,
+                               bool verbose = false);
 
     /*
     Calculate the size of the client's HE encrypted symmetric key in MB
     */
-    size_t he_vec_size(const std::vector<seal::Ciphertext> &enc_sym_key,
-                       bool verbose = false,
-                       std::string name = "HE vector");
+    float he_vec_size(const std::vector<seal::Ciphertext> &enc_sym_key,
+                      bool verbose = false,
+                      std::string name = "HE vector");
 
 } // end of sealhelper namespace
