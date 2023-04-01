@@ -95,8 +95,8 @@ namespace hhe_pktnn_examples
         }
         std::cout << "Analyst sends the encrypted weights and bias to the CSP..."
                   << "\n";
-        csp.enc_weight = analyst.enc_weight;
-        csp.enc_bias = analyst.enc_bias;
+        csp.enc_weight = &analyst.enc_weight;
+        csp.enc_bias = &analyst.enc_bias;
 
         // Client (Data Owner)
         std::cout << "\n";
@@ -363,17 +363,17 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "Analyst sends the HE keys (except the secret key) to the CSP..."
                   << "\n";
-        csp.he_gk = analyst.he_gk;
-        csp.he_pk = analyst.he_pk;
-        csp.he_rk = analyst.he_rk;
+        csp.he_gk = &analyst.he_gk;
+        csp.he_pk = &analyst.he_pk;
+        csp.he_rk = &analyst.he_rk;
         // calculate the commnication overhead (in MB)
         float he_pk_size = sealhelper::he_pk_key_size(analyst.he_pk, false);
         float he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
 
         std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
                   << "\n";
-        csp.enc_weight = analyst.enc_weight;
-        csp.enc_bias = analyst.enc_bias;
+        csp.enc_weight = &analyst.enc_weight;
+        csp.enc_bias = &analyst.enc_bias;
         // calculate the size of encrypted weights and biases (in MB)
         float enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
         analyst_end_0 = std::chrono::high_resolution_clock::now();
@@ -436,8 +436,8 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "The client sends the symmetric encrypted data and the HE encrypted symmetric key to the CSP..."
                   << "\n";
-        csp.c_k = client.c_k;
-        csp.cs = client.cs;
+        csp.c_k = &client.c_k;
+        csp.cs = &client.cs;
         // calculate the size of the symmetric encrypted data and HE encrypted symmetric key (in MB)
         float sym_enc_data_size = pastahelper::sym_enc_data_size(client.cs, true);
         float he_enc_sym_key_size = sealhelper::he_vec_size(client.c_k, true, "HE encrypted symmetric key");
@@ -459,10 +459,10 @@ namespace hhe_pktnn_examples
         // std::cout << "\n";
         // analyst.he_sk.save(std::cout);
         // std::cout << "\n";
-        pasta::PASTA_SEAL HHE(context, csp.he_pk, csp.he_sk, csp.he_rk, csp.he_gk);
-        for (std::vector<uint64_t> c : csp.cs)
+        pasta::PASTA_SEAL HHE(context, *csp.he_pk, csp.he_sk, *csp.he_rk, *csp.he_gk);
+        for (std::vector<uint64_t> c : *csp.cs)
         {
-            std::vector<seal::Ciphertext> c_prime = HHE.decomposition(c, csp.c_k, config::USE_BATCH);
+            std::vector<seal::Ciphertext> c_prime = HHE.decomposition(c, *csp.c_k, config::USE_BATCH);
             if (c_prime.size() == 1)
             {
                 csp.c_primes.push_back(c_prime[0]);
@@ -485,7 +485,9 @@ namespace hhe_pktnn_examples
         for (seal::Ciphertext c_prime : csp.c_primes)
         {
             seal::Ciphertext enc_result;
-            sealhelper::packed_enc_multiply(c_prime, csp.enc_weight[0], enc_result, analyst_he_eval);
+            // std::vector<seal::Ciphertext> csp_enc_weight = *csp.enc_weight;
+            sealhelper::packed_enc_multiply(c_prime, (*csp.enc_weight)[0],
+                                            enc_result, analyst_he_eval);
             // we only do element-wise multiplication for now and ignore the
             // bias for simplication as it does not affect the result
             csp.enc_results.push_back(enc_result);
@@ -493,8 +495,8 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "CSP sends the HE encrypted result to the analyst" << std::endl;
-        analyst.enc_results = csp.enc_results;
-        float enc_results_size = sealhelper::he_vec_size(analyst.enc_results, true, "HE encrypted results");
+        analyst.enc_results = &csp.enc_results;
+        float enc_results_size = sealhelper::he_vec_size(csp.enc_results, true, "HE encrypted results");
         csp_end_0 = std::chrono::high_resolution_clock::now();
         csp_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(csp_end_0 - csp_start_0);
 
@@ -507,7 +509,7 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
-        for (seal::Ciphertext enc_result : analyst.enc_results)
+        for (seal::Ciphertext enc_result : *analyst.enc_results)
         {
             std::vector<int64_t> dec_result = sealhelper::decrypting(enc_result,
                                                                      analyst.he_sk,
@@ -562,7 +564,7 @@ namespace hhe_pktnn_examples
                   << analyst.predictions.size() << " total examples)"
                   << "\n";
         std::cout << "Encrypted accuracy = "
-                  << (double)testNumCorrect / analyst.predictions.size() * 100 << "% \n";
+                  << (double)testNumCorrect / analyst.predictions.size() * 100 << "% \n \n";
         // print out communication and computation costs here
         utils::print_line(__LINE__);
         std::cout << "Computation cost: " << std::endl;
@@ -572,6 +574,7 @@ namespace hhe_pktnn_examples
         utils::print_time("Client", client_time_0.count());
         utils::print_time("CSP", csp_time_0.count());
         utils::print_time("Total", total_time);
+        std::cout << "\n";
 
         utils::print_line(__LINE__);
         std::cout << "Communication cost: " << std::endl;

@@ -31,7 +31,7 @@ namespace hhe_pktnn_examples
         seal::RelinKeys he_rk;
         seal::GaloisKeys he_gk;
         // the HE encrypted results from the csp
-        std::vector<seal::Ciphertext> enc_results;
+        std::vector<seal::Ciphertext> *enc_results;
         // the HE decrypted results
         std::vector<std::vector<int64_t>> dec_results;
         // the final predictions
@@ -52,15 +52,16 @@ namespace hhe_pktnn_examples
 
     struct CSP
     {
-        // things received from the analyst (data scientist)
-        seal::PublicKey he_pk;
-        seal::RelinKeys he_rk;
-        seal::GaloisKeys he_gk;
-        std::vector<seal::Ciphertext> enc_weight; // the encrypted weight (received from the analyst)
-        std::vector<seal::Ciphertext> enc_bias;   // the encrypted bias (received from the analyst)
-        // things received from the client
-        std::vector<seal::Ciphertext> c_k;     // the HE encrypted symmetric keys (received from the client)
-        std::vector<std::vector<uint64_t>> cs; // the symmetric encrypted data (received from the client)
+        // things received from the analyst / data scientist
+        seal::PublicKey *he_pk;
+        seal::RelinKeys *he_rk;
+        seal::GaloisKeys *he_gk;
+        std::vector<seal::Ciphertext> *enc_weight; // the encrypted weight
+        std::vector<seal::Ciphertext> *enc_bias;   // the encrypted bias
+        // things received from the client / data owner
+        std::vector<seal::Ciphertext> *c_k;     // the HE encrypted symmetric keys
+        std::vector<std::vector<uint64_t>> *cs; // the symmetric encrypted data
+
         // the HE secret key needed to construct the HHE object
         seal::SecretKey he_sk;
         // the HE encrypted data after decomposition (and post-process if needed) of the
