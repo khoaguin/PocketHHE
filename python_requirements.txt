@@ -1,0 +1,4 @@
+torch==1.8.1+cu102
+torchvision==0.9.1+cu102
+numpy==1.22.3
+idx2numpy==1.2.3

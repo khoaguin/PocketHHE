@@ -273,10 +273,10 @@ namespace sealhelper
         {
             std::stringstream ss;
             enc_weight_size += cw.save(ss);
-            if (verbose)
-            {
-                std::cout << "The size of the encrypted weight is " << enc_weight_size * 1e-6 << " Mb" << std::endl;
-            }
+        }
+        if (verbose)
+        {
+            std::cout << "The size of the encrypted weight is " << enc_weight_size * 1e-6 << " Mb" << std::endl;
         }
 
         if (ignore_bias == false)
@@ -285,10 +285,10 @@ namespace sealhelper
             {
                 std::stringstream ss;
                 enc_bias_size += cb.save(ss);
-                if (verbose)
-                {
-                    std::cout << "The size of the encrypted bias is " << enc_bias_size * 1e-6 << " Mb" << std::endl;
-                }
+            }
+            if (verbose)
+            {
+                std::cout << "The size of the encrypted bias is " << enc_bias_size * 1e-6 << " Mb" << std::endl;
             }
         }
 

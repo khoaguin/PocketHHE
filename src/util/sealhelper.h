@@ -96,5 +96,4 @@ namespace sealhelper
     float he_vec_size(const std::vector<seal::Ciphertext> &enc_sym_key,
                       bool verbose = false,
                       std::string name = "HE vector");
-
 } // end of sealhelper namespace
