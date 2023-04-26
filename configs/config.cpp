@@ -8,8 +8,8 @@ namespace config
     // General parameters
     bool debugging = false;
     bool verbose = false;
-    int dry_run = true;           // if true, only run a few examples
-    int dry_run_num_samples = 10; // num samples to run when dry_run is true
+    int dry_run = true;          // if true, only run a few examples
+    int dry_run_num_samples = 2; // num samples to run when dry_run is true
     // HE parameters
     uint64_t plain_mod = 65537; // 2^16 + 1
     uint64_t mod_degree = 16384;

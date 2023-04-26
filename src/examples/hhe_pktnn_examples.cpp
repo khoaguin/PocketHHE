@@ -370,6 +370,7 @@ namespace hhe_pktnn_examples
         float he_pk_size = sealhelper::he_pk_key_size(analyst.he_pk, false);
         float he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
 
+        utils::print_line(__LINE__);
         std::cout << "Analyst sends the encrypted weight and bias to the CSP..."
                   << "\n";
         csp.enc_weight = &analyst.enc_weight;
