@@ -356,3 +356,4 @@ MigrationBackup/
 /build
 
 *.ipynb_checkpoints
+notebooks/lightning_logs
