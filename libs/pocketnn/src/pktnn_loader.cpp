@@ -426,7 +426,7 @@ void pktnn::pktloader::loadFashionMnistLabels(pktmat &labels, int numLabelsToLoa
     }
 }
 
-void pktnn::pktloader::loadEcgData(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging)
+void pktnn::pktloader::loadTimeSeriesData(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging)
 {
     std::string fileName;
 
@@ -451,7 +451,7 @@ void pktnn::pktloader::loadEcgData(pktmat &dataMat, std::string filename, int nu
     }
 }
 
-void pktnn::pktloader::loadEcgLabels(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging)
+void pktnn::pktloader::loadTimeSeriesLabels(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging)
 {
     std::string fileName;
     if (debugging)

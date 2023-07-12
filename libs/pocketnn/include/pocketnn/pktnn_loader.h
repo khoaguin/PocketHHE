@@ -30,9 +30,9 @@ namespace pktnn
         // load the FashionMNIST dataset
         static void loadFashionMnistImages(pktmat &images, int numImagesToLoad, bool isTrain);
         static void loadFashionMnistLabels(pktmat &labels, int numLabelsToLoad, bool isTrain);
-        // load the MIT-BIH dataset
-        static void loadEcgData(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging = false);
-        static void loadEcgLabels(pktmat &labels, std::string filename, int numLabelsToLoad, bool debugging = false);
+        // load the timeseries datasets (MIT-BIH and hypnogram)
+        static void loadTimeSeriesData(pktmat &dataMat, std::string filename, int numExamplesToLoad, bool debugging = false);
+        static void loadTimeSeriesLabels(pktmat &labels, std::string filename, int numLabelsToLoad, bool debugging = false);
     };
 
     // extern "C" {

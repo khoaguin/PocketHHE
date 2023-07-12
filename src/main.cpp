@@ -14,9 +14,12 @@ int main()
     // pktnn_examples::fc_int_dfa_ecg_one_layer(); // training on MIT-BIH using direct feedback alignment for the 1-layer nn
     // pktnn_examples::fc_int_dfa_ecg_one_layer_inference(); // inference on MIT-BIH for the 1-layer nn
 
+    pktnn_examples::fc_int_dfa_hypnogram_one_layer(); // training on hypnogram data using direct feedback alignment for the 1-layer nn
+
     // --- HHE examples ---
+    // hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
+    // hhe_pktnn_examples::hhe_pktnn_hypnogram_inference(); // encrypted inference protocol on hypnogram for the 1-layer nn
     // hhe_pktnn_examples::hhe_pktnn_mnist_inference();  // encrypted inference protocol on MNIST for the 1-layer nn
-    hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
 
     return 0;
 }

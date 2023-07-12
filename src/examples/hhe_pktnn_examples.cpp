@@ -392,11 +392,11 @@ namespace hhe_pktnn_examples
         int numTestSamples = 13245;
         pktnn::pktmat ecgTestLabels(numTestSamples, 1);
         pktnn::pktmat ecgTestInput(numTestSamples, 128);
-        pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
-                                      numTestSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
+                                             numTestSamples, config::debugging);
 
-        pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
-                                        numTestSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
+                                               numTestSamples, config::debugging);
         ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
 
         if (config::dry_run) // get a slice of dry_run data samples

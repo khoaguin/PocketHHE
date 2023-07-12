@@ -581,19 +581,19 @@ namespace pktnn_examples
         pktnn::pktmat ecgTestLabels(numTestSamples, 1);
         pktnn::pktmat ecgTestInput(numTestSamples, 128);
 
-        pktnn::pktloader::loadEcgData(ecgTrainInput, "data/mit-bih/csv/mitbih_x_train_int.csv",
-                                      numTrainSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesData(ecgTrainInput, "data/mit-bih/csv/mitbih_x_train_int.csv",
+                                             numTrainSamples, config::debugging);
         ecgTrainInput.printShape();
-        pktnn::pktloader::loadEcgLabels(ecgTrainLabels, "data/mit-bih/csv/mitbih_bin_y_train.csv",
-                                        numTrainSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesLabels(ecgTrainLabels, "data/mit-bih/csv/mitbih_bin_y_train.csv",
+                                               numTrainSamples, config::debugging);
         ecgTrainLabels.selfMulConst(128); // scale the output from 0-1 to 0-128 due to PocketNN's sigmoid function
         ecgTrainLabels.printShape();
 
-        pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
-                                      numTestSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
+                                             numTestSamples, config::debugging);
         ecgTestInput.printShape();
-        pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
-                                        numTestSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
+                                               numTestSamples, config::debugging);
         ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
         ecgTestLabels.printShape();
 
@@ -803,11 +803,11 @@ namespace pktnn_examples
         pktnn::pktmat ecgTestLabels(numTestSamples, 1);
         pktnn::pktmat ecgTestInput(numTestSamples, 128);
 
-        pktnn::pktloader::loadEcgData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
-                                      numTestSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesData(ecgTestInput, "data/mit-bih/csv/mitbih_x_test_int.csv",
+                                             numTestSamples, config::debugging);
         // ecgTestInput.printShape();
-        pktnn::pktloader::loadEcgLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
-                                        numTestSamples, config::debugging);
+        pktnn::pktloader::loadTimeSeriesLabels(ecgTestLabels, "data/mit-bih/csv/mitbih_bin_y_test.csv",
+                                               numTestSamples, config::debugging);
         ecgTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128
         // ecgTestLabels.printShape();
 
@@ -860,6 +860,34 @@ namespace pktnn_examples
                   << "\n";
         std::cout << "Final test accuracy = " << test_acc * 100 << "%"
                   << "\n";
+
+        return 0;
+    }
+
+    int fc_int_dfa_hypnogram_one_layer()
+    {
+        utils::print_example_banner("PocketNN: Training on hypnogram data using direct feedback alignment with a 1-layer FC network");
+
+        // Loading the hypnogram dataset
+        std::cout << "----- Loading hypnogram data ----- \n";
+        int numTrainSamples = 36865;
+        int numTestSamples = 9217;
+
+        pktnn::pktmat hypnogramTrainInput(numTrainSamples, 300);
+        pktnn::pktmat hypnogramTrainLabels(numTrainSamples, 1);
+        pktnn::pktmat hypnogramTestInput(numTestSamples, 300);
+        pktnn::pktmat hypnogramTestLabels(numTestSamples, 1);
+
+        pktnn::pktloader::loadTimeSeriesData(hypnogramTrainInput, "data/hypnogram/hypnogram_input_train.csv",
+                                             numTrainSamples, config::debugging);
+        hypnogramTrainInput.printShape();
+        // hypnogramTrainInput.printMat();
+
+        pktnn::pktloader::loadTimeSeriesLabels(hypnogramTrainLabels, "data/hypnogram/hypnogram_output_train.csv",
+                                               numTrainSamples, config::debugging);
+        hypnogramTrainLabels.selfMulConst(128); // scale the output from 0-1 to 0-128 due to PocketNN's sigmoid function
+        hypnogramTrainLabels.printShape();
+        // hypnogramTrainLabels.printMat();
 
         return 0;
     }
