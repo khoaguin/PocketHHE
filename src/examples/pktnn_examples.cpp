@@ -864,6 +864,34 @@ namespace pktnn_examples
         return 0;
     }
 
+    int initial_stats(pktnn::pktmat &inputMatrix,
+                      const pktnn::pktmat &outputMatrix,
+                      pktnn::pktfc &fc,
+                      std::string process)
+    {
+        fc.forward(inputMatrix);
+        int numCorrect = 0;
+        int numSamples = inputMatrix.rows();
+        // fc.printOutput();
+        for (int r = 0; r < numSamples; ++r)
+        {
+            int output_row_r = 0;
+            fc.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
+            if (outputMatrix.getElem(r, 0) == output_row_r)
+            {
+                ++numCorrect;
+            }
+        }
+        std::cout << "Initial " << process << " correct predictions: "
+                  << numCorrect << " (out of " << numSamples << " examples)"
+                  << "\n";
+        std::cout << "Initial " << process << " accuracy: "
+                  << (numCorrect * 1.0 / numSamples) * 100 << "%"
+                  << "\n";
+
+        return 0;
+    }
+
     int fc_int_dfa_hypnogram_one_layer()
     {
         utils::print_example_banner("PocketNN: Training on hypnogram data using direct feedback alignment with a 1-layer FC network");
@@ -882,12 +910,159 @@ namespace pktnn_examples
                                              numTrainSamples, config::debugging);
         hypnogramTrainInput.printShape();
         // hypnogramTrainInput.printMat();
-
         pktnn::pktloader::loadTimeSeriesLabels(hypnogramTrainLabels, "data/hypnogram/hypnogram_output_train.csv",
                                                numTrainSamples, config::debugging);
         hypnogramTrainLabels.selfMulConst(128); // scale the output from 0-1 to 0-128 due to PocketNN's sigmoid function
         hypnogramTrainLabels.printShape();
         // hypnogramTrainLabels.printMat();
+
+        pktnn::pktloader::loadTimeSeriesData(hypnogramTestInput, "data/hypnogram/hypnogram_input_test.csv",
+                                             numTestSamples, config::debugging);
+        hypnogramTestInput.printShape();
+        pktnn::pktloader::loadTimeSeriesLabels(hypnogramTestLabels, "data/hypnogram/hypnogram_output_test.csv",
+                                               numTestSamples, config::debugging);
+        hypnogramTestLabels.selfMulConst(128); // scale the output from 0-1 to 0-128 due to PocketNN's sigmoid function
+        hypnogramTestLabels.printShape();
+
+        // Defining the network
+        std::cout << "----- Defining the neural net ----- \n";
+        pktnn::pktactv::Actv a = pktnn::pktactv::Actv::pocket_sigmoid;
+        pktnn::pktfc fc1(300, 1);
+        fc1.useDfa(true).setActv(a);
+        std::cout << "Neural network with 1 fc layer and pocket_sigmoid activation\n";
+
+        // Initial stats
+        std::cout << "----- Initial stats before training ----- \n";
+        initial_stats(hypnogramTrainInput, hypnogramTrainLabels, fc1, "train");
+        std::cout << "----- Initial stats before testing ----- \n";
+        initial_stats(hypnogramTestInput, hypnogramTestLabels, fc1, "test");
+
+        // Training
+        std::cout << "----- Start training -----\n";
+        pktnn::pktmat lossMat;
+        pktnn::pktmat lossDeltaMat;
+        pktnn::pktmat batchLossDeltaMat;
+        pktnn::pktmat miniBatchInput;
+        pktnn::pktmat miniBatchTrainTargets;
+
+        std::cout << "Learning Rate Inverse = " << config::lr_inv
+                  << ", numTrainSamples = " << numTrainSamples << ", miniBatchSize = "
+                  << config::mini_batch_size << ", numEpochs = " << config::epoch
+                  << ", weight lower bound = " << config::weight_lower_bound
+                  << ", weight upper bound = " << config::weight_upper_bound << "\n";
+
+        // random indices template
+        int *indices = new int[numTrainSamples];
+        for (int i = 0; i < numTrainSamples; ++i)
+        {
+            indices[i] = i;
+        }
+
+        float best_train_acc = 0.0;
+        float best_test_acc = 0.0;
+        int best_train_epoch = 0;
+        int best_test_epoch = 0;
+        std::string testCorrect = "";
+        std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
+        for (int e = 1; e <= config::epoch; ++e)
+        {
+            // Shuffle the indices
+            for (int i = numTrainSamples - 1; i > 0; --i)
+            {
+                int j = rand() % (i + 1); // Pick a random index from 0 to r
+                int temp = indices[j];
+                indices[j] = indices[i];
+                indices[i] = temp;
+            }
+
+            if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv))
+            {
+                // reducing the learning rate by a half every 5 epochs to avoid overflow
+                config::lr_inv *= 2;
+            }
+
+            int sumLoss = 0;
+            int sumLossDelta = 0;
+            int epochNumCorrect = 0;
+            int numIter = numTrainSamples / config::mini_batch_size;
+
+            // The training loop
+            for (int i = 0; i < numIter; ++i)
+            {
+                int batchNumCorrect = 0;
+                const int idxStart = i * config::mini_batch_size;
+                const int idxEnd = idxStart + config::mini_batch_size;
+                miniBatchInput.indexedSlicedSamplesOf(hypnogramTrainInput, indices, idxStart, idxEnd);
+                miniBatchTrainTargets.indexedSlicedSamplesOf(hypnogramTrainLabels, indices, idxStart, idxEnd);
+
+                fc1.forward(miniBatchInput);
+                sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, fc1.mOutput);
+                sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, fc1.mOutput);
+
+                // calculate the number of correct predictions in the batch
+                for (int r = 0; r < config::mini_batch_size; ++r)
+                {
+                    int output_row_r = 0;
+                    fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
+                    // std::cout << fc1.mOutput.getElem(r, 0) << "----" << output_row_r << " ";
+                    if (miniBatchTrainTargets.getElem(r, 0) == output_row_r)
+                    {
+                        ++batchNumCorrect;
+                    }
+                }
+                epochNumCorrect += batchNumCorrect;
+                // the backward pass to calculate the gradients
+                fc1.backward(lossDeltaMat, config::lr_inv, config::weight_lower_bound, config::weight_upper_bound);
+            }
+            float train_acc = float(epochNumCorrect * 1.0) / float(numTrainSamples);
+            if (train_acc > best_train_acc)
+            {
+                best_train_acc = train_acc;
+                best_train_epoch = e;
+                // std::cout << "found best train accuracy = " << best_train_acc << " at epoch " << e << "\n";
+            }
+            std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << train_acc << "\n";
+            // after training through the whole dataset, check the test set accuracy
+            fc1.forward(hypnogramTestInput);
+            int testNumCorrect = 0;
+            for (int r = 0; r < numTestSamples; ++r)
+            {
+                int output_row_r = 0;
+                fc1.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
+
+                if (hypnogramTestLabels.getElem(r, 0) == output_row_r)
+                {
+                    ++testNumCorrect;
+                }
+            }
+            auto test_acc = float(testNumCorrect * 1.0) / float(numTestSamples);
+            testCorrect += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(test_acc)) + "\n";
+            if (test_acc > best_test_acc)
+            {
+                best_test_acc = test_acc;
+                best_test_epoch = e;
+                testCorrect += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". ";
+                testCorrect += "save weights to " + config::save_weight_path + "\n";
+                fc1.saveWeight(config::save_weight_path);
+                fc1.saveBias(config::save_bias_path);
+            }
+        }
+        std::cout << "Epoch | NumCorrect | TestAccuracy \n";
+        std::cout << testCorrect;
+
+        std::cout << "----- Results -----\n";
+        std::cout << "best train accuracy = " << best_train_acc << " at epoch " << best_train_epoch << "\n";
+        std::cout << "best test accuracy = " << best_test_acc << " at epoch " << best_test_epoch << "\n";
+
+        std::cout << "trained weight shape: ";
+        fc1.getWeight().printShape();
+        std::cout << "trained weight average = " << fc1.getWeight().average()
+                  << "; trained weight max value = " << fc1.getWeight().getColMax(0)
+                  << "; trained weight min value = " << fc1.getWeight().getColMin(0) << "\n";
+        std::cout << "trained bias shape: ";
+        fc1.getBias().printShape();
+        std::cout << "trained bias = ";
+        fc1.getBias().printMat();
 
         return 0;
     }
