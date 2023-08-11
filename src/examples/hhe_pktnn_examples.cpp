@@ -23,7 +23,7 @@ namespace hhe_pktnn_examples
                   << "\n";
         std::cout << "Analyst constructs the HE context"
                   << "\n";
-        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context();
+        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context(config::plain_mod, config::mod_degree, config::seclevel);
         sealhelper::print_parameters(*context);
 
         utils::print_line(__LINE__);
@@ -291,7 +291,7 @@ namespace hhe_pktnn_examples
 
         std::cout << "Analyst constructs the HE context"
                   << "\n";
-        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context();
+        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context(config::plain_mod, config::mod_degree, config::seclevel);
         sealhelper::print_parameters(*context);
         utils::print_line(__LINE__);
         std::cout << "Analyst creates the HE keys, batch encoder, encryptor and evaluator from the context"
