@@ -12,11 +12,11 @@ namespace config
     int dry_run_num_samples = 1; // num samples to run when dry_run is true
     // === HE parameters - refer to the PASTA paper's benchmark on PASTA3 with SEAL ===
     // 17 bits
-    // uint64_t plain_mod = 65537;
-    // uint64_t mod_degree = 16384;
+    uint64_t plain_mod = 65537;
+    uint64_t mod_degree = 16384;
     // 33 bits
-    uint64_t plain_mod = 8088322049;
-    uint64_t mod_degree = 32768;
+    // uint64_t plain_mod = 8088322049;
+    // uint64_t mod_degree = 32768;
     // 60 bits
     // uint64_t plain_mod = 1096486890805657601;
     // uint64_t mod_degree = 32768;
@@ -25,23 +25,24 @@ namespace config
     bool use_bsgs = false;
     bool USE_BATCH = true;
     // === MNIST parameters ===
-    int num_test_samples = 1;
+    int num_test_samples = 5;
     int num_classes = 10;
     int mnist_rows = 28;
     int mnist_cols = 28;
-    // === Neural network parameters ===
     int dim_input = mnist_rows * mnist_cols;
     int dim_layer1 = 100; // only for the 3-layer MNIST neural net
     int dim_layer2 = 50;  // only for the 3-layer MNIST neural net
-    int epoch = 100;
+    // === Neural network parameters ===
+    int epoch = 50;
     int mini_batch_size = 4; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 50;
-    int weight_lower_bound = -2047;
-    int weight_upper_bound = 2048;
+    int weight_lower_bound = -511;
+    int weight_upper_bound = 512;
 
     // weights for the ECG dataset
-    std::string save_weight_path = "weights/ecg/ecg_2048/fc1_weight_50epochs_bz4.csv";
-    std::string save_bias_path = "weights/ecg/ecg_2048/fc1_bias_50epochs_bs4.csv";
+    std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
+    std::string save_bias_path = "weights/ecg/ecg_512/fc1_bias_50epochs_bs4.csv";
+
     // weights for the SpO2 dataset
     // std::string save_weight_path = "weights/SpO2/int/fc1_weight_100epochs_bz4_clamp1024.csv";
     // std::string save_bias_path = "weights/SpO2/int/fc1_bias_100epochs_bs4_clamp1024.csv";
