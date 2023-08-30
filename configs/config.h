@@ -29,6 +29,7 @@ namespace config
     extern int lr_inv;
     extern int weight_lower_bound;
     extern int weight_upper_bound;
+    extern bool save_weights;
     extern std::string save_weight_path;
     extern std::string save_bias_path;
     // Parameters to run experiments

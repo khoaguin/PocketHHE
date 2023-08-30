@@ -52,6 +52,9 @@ void pktactv::activate(pktmat &matOut, pktmat &matIn, pktmat &matActvGradInv, Ac
     case Actv::as_is:
         asIs(matOut, matIn, matActvGradInv, k);
         break;
+    case Actv::square:
+        square(matOut, matIn, matActvGradInv, k);
+        break;
     default:
         std::cout << "No activation function!\n";
         break;
@@ -465,6 +468,25 @@ void pktactv::asIs(pktmat &matOut, pktmat &matIn, pktmat &matActvGradInv, int k)
         for (int c = 0; c < matOut.cols(); ++c)
         {
             matOut.setElem(r, c, matIn.getElem(r, c));
+        }
+    }
+}
+
+void pktactv::square(pktmat &matOut, pktmat &matIn, pktmat &matActvGradInv, int k)
+{
+    assert(matOut.dimsEqual(matIn));
+    // the gradient matrix
+    if (!matActvGradInv.dimsEqual(matOut))
+    {
+        matActvGradInv.resetZero(matOut.rows(), matOut.cols());
+    }
+    for (int r = 0; r < matOut.rows(); ++r)
+    {
+        for (int c = 0; c < matOut.cols(); ++c)
+        {
+            int inElem = matIn.getElem(r, c);
+            matOut.setElem(r, c, (int)std::pow(inElem, 2));
+            matActvGradInv.setElem(r, c, inElem * 2);
         }
     }
 }

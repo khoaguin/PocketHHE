@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 #include "pktnn_tools.h"
 #include "pktnn_consts.h"
@@ -56,6 +57,8 @@ namespace pktnn
         int cols() const;
         int sum() const;
         int numElems() const;
+        int getMax() const;
+        int getMin() const;
         int getRowMin(int row);
         int getRowMax(int row);
         int getColMin(int col);

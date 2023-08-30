@@ -345,6 +345,38 @@ int pktnn::pktmat::numElems() const
     return mRows * mCols;
 }
 
+int pktnn::pktmat::getMax() const
+{
+    int result = 0;
+    for (int r = 0; r < mRows; ++r)
+    {
+        for (int c = 0; c < mCols; ++c)
+        {
+            if (mMat[r][c] > result)
+            {
+                result = mMat[r][c];
+            }
+        }
+    }
+    return result;
+}
+
+int pktnn::pktmat::getMin() const
+{
+    int result = 0;
+    for (int r = 0; r < mRows; ++r)
+    {
+        for (int c = 0; c < mCols; ++c)
+        {
+            if (mMat[r][c] < result)
+            {
+                result = mMat[r][c];
+            }
+        }
+    }
+    return result;
+}
+
 int pktnn::pktmat::getRowMin(int row)
 {
     int returnVal = PKT_MAX;

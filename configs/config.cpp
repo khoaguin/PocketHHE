@@ -36,8 +36,9 @@ namespace config
     int epoch = 50;
     int mini_batch_size = 4; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 50;
-    int weight_lower_bound = -511;
-    int weight_upper_bound = 512;
+    int weight_lower_bound = -127;
+    int weight_upper_bound = 128;
+    bool save_weights = true;
 
     // weights for the ECG dataset
     std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
