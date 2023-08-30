@@ -892,7 +892,7 @@ namespace pktnn_examples
         return 0;
     }
 
-    int fc_int_dfa_hypnogram_one_layer()
+    int fc_int_dfa_spo2_one_layer()
     {
         utils::print_example_banner("PocketNN: Training on hypnogram data using direct feedback alignment with a 1-layer FC network");
 
@@ -1066,4 +1066,57 @@ namespace pktnn_examples
 
         return 0;
     }
+
+    int fc_int_dfa_spo2_square()
+    {
+        utils::print_example_banner("PocketNN: Training on SpO2 data using "
+                                    "a 2 FC layers with square activation neural network");
+
+        // Loading the hypnogram dataset
+        std::cout << "----- Loading SpO2 data ----- \n";
+        int numSamples = 46082;
+        pktnn::pktmat SpO2Input(numSamples, 300);
+        pktnn::pktmat SpO2Labels(numSamples, 1);
+
+        pktnn::pktloader::loadTimeSeriesData(SpO2Input,
+                                             "data/SpO2/SpO2_input.csv",
+                                             numSamples, config::debugging);
+        SpO2Input.printShape();
+        // SpO2Input.printMat();
+        pktnn::pktloader::loadTimeSeriesData(SpO2Labels,
+                                             "data/SpO2/SpO2_output.csv",
+                                             numSamples, config::debugging);
+        SpO2Labels.printShape();
+        // SpO2Labels.printMat();
+
+        // split with 80-20% ratio
+        int numTrainSamples = 36865;
+        int numTestSamples = 9217;
+
+        pktnn::pktmat SpO2TrainInput(numTrainSamples, 300);
+        pktnn::pktmat SpO2TrainLabels(numTrainSamples, 1);
+        pktnn::pktmat SpO2TestInput(numTestSamples, 300);
+        pktnn::pktmat SpO2TestLabels(numTestSamples, 1);
+
+        std::cout << "Load train input with shape ";
+        SpO2TrainInput.sliceOf(SpO2Input, 0, numTrainSamples - 1, 0, 299);
+        SpO2TrainInput.printShape();
+        std::cout << "Load train labels with shape ";
+        SpO2TrainLabels.sliceOf(SpO2Labels, 0, numTrainSamples - 1, 0, 0);
+        SpO2TrainLabels.printShape();
+
+        std::cout << "Load test input with shape ";
+        SpO2TestInput.sliceOf(SpO2Input, numTrainSamples,
+                              numTrainSamples + numTestSamples - 1,
+                              0, 299);
+        SpO2TestInput.printShape();
+        std::cout << "Load test labels with shape ";
+        SpO2TestLabels.sliceOf(SpO2Labels, numTrainSamples,
+                               numTrainSamples + numTestSamples - 1,
+                               0, 0);
+        SpO2TestLabels.printShape();
+
+        return 1;
+    }
+
 } // end of pktnn_examples namespace
