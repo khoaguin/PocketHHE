@@ -7,7 +7,7 @@ namespace config
 {
     // === General parameters ===
     bool debugging = false;
-    bool verbose = false;
+    bool verbose = true;
     int dry_run = true;          // if true, only run a few examples
     int dry_run_num_samples = 1; // num samples to run when dry_run is true
     // === HE parameters - refer to the PASTA paper's benchmark on PASTA3 with SEAL ===
@@ -41,12 +41,12 @@ namespace config
     bool save_weights = true;
 
     // weights for the ECG dataset
-    std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
-    std::string save_bias_path = "weights/ecg/ecg_512/fc1_bias_50epochs_bs4.csv";
+    // std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
+    // std::string save_bias_path = "weights/ecg/ecg_512/fc1_bias_50epochs_bs4.csv";
 
     // weights for the SpO2 dataset
-    // std::string save_weight_path = "weights/SpO2/int/fc1_weight_100epochs_bz4_clamp1024.csv";
-    // std::string save_bias_path = "weights/SpO2/int/fc1_bias_100epochs_bs4_clamp1024.csv";
+    std::string save_weight_path = "weights/SpO2/int/fc1_weight_100epochs_bz4_clamp128.csv";
+    std::string save_bias_path = "weights/SpO2/int/fc1_bias_100epochs_bs4_clamp128.csv";
 
     // === Parameters to run experiments ===
     // uint64_t NUM_RUN = 50;

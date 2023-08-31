@@ -1068,12 +1068,12 @@ namespace pktnn_examples
         return 0;
     }
 
-    int training(const pktnn::pktmat &trainInput,
-                 const pktnn::pktmat &trainLabels,
-                 const pktnn::pktmat &testInput,
-                 const pktnn::pktmat &testLabels,
-                 pktnn::pktfc &first_layer,
-                 pktnn::pktfc &last_layer)
+    int train(pktnn::pktmat &trainInput,
+              pktnn::pktmat &trainLabels,
+              pktnn::pktmat &testInput,
+              pktnn::pktmat &testLabels,
+              pktnn::pktfc &first_layer,
+              pktnn::pktfc &last_layer)
     {
         pktnn::pktmat lossMat;
         pktnn::pktmat lossDeltaMat;
@@ -1100,95 +1100,100 @@ namespace pktnn_examples
             indices[i] = i;
         }
 
-        // float best_train_acc = 0.0;
-        // float best_test_acc = 0.0;
-        // int best_train_epoch = 0;
-        // int best_test_epoch = 0;
-        // std::string testOutputMessage = "";
-        // std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
-        // for (int e = 1; e <= config::epoch; ++e)
-        // {
-        //     // Shuffle the indices
-        //     for (int i = numTrainSamples - 1; i > 0; --i)
-        //     {
-        //         int j = rand() % (i + 1); // Pick a random index from 0 to r
-        //         int temp = indices[j];
-        //         indices[j] = indices[i];
-        //         indices[i] = temp;
-        //     }
+        float best_train_acc = 0.0;
+        float best_test_acc = 0.0;
+        int best_train_epoch = 0;
+        int best_test_epoch = 0;
+        std::string testOutputMessage = "";
+        std::cout << "Epoch | SumLoss | NumCorrect | Accuracy\n";
+        // The epoch loop
+        for (int e = 1; e <= config::epoch; ++e)
+        {
+            // Shuffle the indices
+            for (int i = numTrainSamples - 1; i > 0; --i)
+            {
+                int j = rand() % (i + 1); // Pick a random index from 0 to r
+                int temp = indices[j];
+                indices[j] = indices[i];
+                indices[i] = temp;
+            }
 
-        //     if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv))
-        //     {
-        //         // reducing the learning rate by a half every 5 epochs to avoid overflow
-        //         config::lr_inv *= 2;
-        //     }
+            if ((e % 10 == 0) && (config::lr_inv < 2 * config::lr_inv))
+            {
+                // reducing the learning rate by a half every 5 epochs to avoid overflow
+                config::lr_inv *= 2;
+            }
 
-        //     int sumLoss = 0;
-        //     int sumLossDelta = 0;
-        //     int epochNumCorrect = 0;
-        //     int numIter = numTrainSamples / config::mini_batch_size;
+            int sumLoss = 0;
+            int sumLossDelta = 0;
+            int epochNumCorrect = 0;
+            int numIter = numTrainSamples / config::mini_batch_size;
+            // numIter = 1; // for debugging
 
-        //     // The training loop
-        //     for (int i = 0; i < numIter; ++i)
-        //     {
-        //         int batchNumCorrect = 0;
-        //         const int idxStart = i * config::mini_batch_size;
-        //         const int idxEnd = idxStart + config::mini_batch_size;
-        //         miniBatchInput.indexedSlicedSamplesOf(trainInput, indices, idxStart, idxEnd);
-        //         miniBatchTrainTargets.indexedSlicedSamplesOf(trainLables, indices, idxStart, idxEnd);
+            // The training loop
+            for (int i = 0; i < numIter; ++i)
+            {
+                // get the mini-batch data
+                int batchNumCorrect = 0;
+                const int idxStart = i * config::mini_batch_size;
+                const int idxEnd = idxStart + config::mini_batch_size;
+                miniBatchInput.indexedSlicedSamplesOf(trainInput, indices, idxStart, idxEnd);
+                miniBatchTrainTargets.indexedSlicedSamplesOf(trainLabels, indices, idxStart, idxEnd);
 
-        //         first_layer.forward(miniBatchInput);
-        //         sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, last_layer.mOutput);
-        //         sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, last_layer.mOutput);
+                // the forward pass
+                first_layer.forward(miniBatchInput);
+                sumLoss += pktnn::pktloss::batchL2Loss(lossMat, miniBatchTrainTargets, last_layer.mOutput);
+                sumLossDelta = pktnn::pktloss::batchL2LossDelta(lossDeltaMat, miniBatchTrainTargets, last_layer.mOutput);
 
-        //         // calculate the number of correct predictions in the batch
-        //         for (int r = 0; r < config::mini_batch_size; ++r)
-        //         {
-        //             int output_row_r = 0;
-        //             last_layer.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
-        //             // std::cout << fc1.mOutput.getElem(r, 0) << "----" << output_row_r << " ";
-        //             if (miniBatchTrainTargets.getElem(r, 0) == output_row_r)
-        //             {
-        //                 ++batchNumCorrect;
-        //             }
-        //         }
-        //         epochNumCorrect += batchNumCorrect;
-        //         // the backward pass to calculate the gradients
-        //         last_layer.backward(lossDeltaMat, config::lr_inv, config::weight_lower_bound, config::weight_upper_bound);
-        //     }
-        //     float train_acc = float(epochNumCorrect * 1.0) / float(numTrainSamples);
-        //     if (train_acc > best_train_acc)
-        //     {
-        //         best_train_acc = train_acc;
-        //         best_train_epoch = e;
-        //         // std::cout << "found best train accuracy = " << best_train_acc << " at epoch " << e << "\n";
-        //     }
-        //     std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << train_acc << "\n";
+                // calculate the number of correct predictions in the batch
+                for (int r = 0; r < config::mini_batch_size; ++r)
+                {
+                    int output_row_r = 0;
+                    last_layer.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
+                    // std::cout << fc1.mOutput.getElem(r, 0) << "----" << output_row_r << " ";
+                    if (miniBatchTrainTargets.getElem(r, 0) == output_row_r)
+                    {
+                        ++batchNumCorrect;
+                    }
+                }
+                epochNumCorrect += batchNumCorrect;
+                // the backward pass to calculate the gradients
+                last_layer.backward(lossDeltaMat, config::lr_inv, config::weight_lower_bound, config::weight_upper_bound);
+            }
+            float train_acc = float(epochNumCorrect * 1.0) / float(numTrainSamples);
+            if (train_acc > best_train_acc)
+            {
+                best_train_acc = train_acc;
+                best_train_epoch = e;
+                // std::cout << "found best train accuracy = " << best_train_acc << " at epoch " << e << "\n";
+            }
+            std::cout << e << " | " << sumLoss << " | " << epochNumCorrect << " | " << train_acc << "\n";
 
-        //     // after training through the whole dataset, check the test set accuracy
-        //     first_layer.forward(testInput);
-        //     int testNumCorrect = 0;
-        //     for (int r = 0; r < numTestSamples; ++r)
-        //     {
-        //         int output_row_r = 0;
-        //         last_layer.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
+            // after training through the whole dataset, check the test set accuracy
+            first_layer.forward(testInput);
+            int testNumCorrect = 0;
+            for (int r = 0; r < numTestSamples; ++r)
+            {
+                int output_row_r = 0;
+                last_layer.mOutput.getElem(r, 0) > 64 ? output_row_r = 128 : output_row_r = 0;
 
-        //         if (testLables.getElem(r, 0) == output_row_r)
-        //         {
-        //             ++testNumCorrect;
-        //         }
-        //     }
-        //     auto test_acc = float(testNumCorrect * 1.0) / float(numTestSamples);
-        //     testOutputMessage += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(test_acc)) + "\n";
-        //     if (test_acc > best_test_acc)
-        //     {
-        //         best_test_acc = test_acc;
-        //         best_test_epoch = e;
-        //         testOutputMessage += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". ";
-        //     }
-        // }
-        // std::cout << "Epoch | NumCorrect | TestAccuracy \n";
-        // std::cout << testOutputMessage;
+                if (testLabels.getElem(r, 0) == output_row_r)
+                {
+                    ++testNumCorrect;
+                }
+            }
+            auto test_acc = float(testNumCorrect * 1.0) / float(numTestSamples);
+            testOutputMessage += (std::to_string(e) + " | " + std::to_string(testNumCorrect) + " | " + std::to_string(test_acc)) + "\n";
+            if (test_acc > best_test_acc)
+            {
+                best_test_acc = test_acc;
+                best_test_epoch = e;
+                testOutputMessage += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". ";
+            }
+        }
+        std::cout << "Epoch | NumCorrect | TestAccuracy \n";
+        std::cout << testOutputMessage;
+        std::cout << "\n";
 
         return 1;
     }
@@ -1245,20 +1250,22 @@ namespace pktnn_examples
                                0, 0);
         SpO2TestLabels.printShape();
 
-        // Defining the network
+        // Defining the square neural network
         std::cout << "----- Defining the square neural net ----- \n";
         pktnn::pktfc fc1(300, 128);
+        std::cout << "First FC layer - ";
         fc1.printWeightShape();
-        pktnn::pktactv::Actv square_actv = pktnn::pktactv::Actv::square;
-        std::cout << "First activation: square"
+        pktnn::pktactv::Actv a1 = pktnn::pktactv::Actv::pocket_tanh;
+        std::cout << "First activation: pocket_tanh"
                   << "\n";
         pktnn::pktfc fc2(128, 1);
+        std::cout << "Second FC layer - ";
         fc2.printWeightShape();
-        pktnn::pktactv::Actv sigmoid_actv = pktnn::pktactv::Actv::pocket_sigmoid;
+        pktnn::pktactv::Actv a2 = pktnn::pktactv::Actv::pocket_sigmoid;
         std::cout << "Second activation: sigmoid"
                   << "\n";
-        fc1.useDfa(true).setActv(square_actv).setNextLayer(fc2);
-        fc2.useDfa(true).setActv(sigmoid_actv);
+        fc1.useDfa(true).setActv(a1).setNextLayer(fc2);
+        fc2.useDfa(true).setActv(a2);
 
         // Initial stats
         std::cout << "----- Initial stats on the train dataset before training ----- \n";
@@ -1272,14 +1279,17 @@ namespace pktnn_examples
 
         // Training
         std::cout << "----- Start training -----\n";
-        training(SpO2TrainInput, SpO2TrainLabels, SpO2TestInput, SpO2TestLabels, fc1, fc2);
+        train(SpO2TrainInput, SpO2TrainLabels, SpO2TestInput, SpO2TestLabels, fc1, fc2);
 
         // Results
-
+        std::cout << "----- Results -----\n";
         std::cout << "First layer's weight average after training: "
                   << fc1.getWeight().average() << "\n";
+        // fc1.getWeight().printMat();
         std::cout << "Second layer's weight average after training: "
                   << fc2.getWeight().average() << "\n";
+        // fc2.getWeight().printMat();
+
         return 1;
     }
 

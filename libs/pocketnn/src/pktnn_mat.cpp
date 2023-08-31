@@ -611,7 +611,11 @@ pktmat &pktmat::matMulMat(pktmat &mat1, pktmat &mat2)
                 {
                     if (total < prevTotal)
                     {
-                        std::cout << "Overflow: " << mat1.mMat[r1][c1_r2] << ", " << mat2.mMat[c1_r2][c2] << " | " << prevTotal << " -> " << total << "\n";
+                        if (config::verbose)
+                        {
+                            std::cout << "Overflow: " << mat1.mMat[r1][c1_r2] << ", "
+                                      << mat2.mMat[c1_r2][c2] << " | " << prevTotal << " -> " << total << "\n";
+                        }
                     }
                 }
             }

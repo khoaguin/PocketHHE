@@ -11,6 +11,8 @@
 #include "pktnn_consts.h"
 #include "pktnn_actv.h"
 
+#include "../../../configs/config.h"
+
 namespace pktnn
 {
     class pktfc : public pktlayer
@@ -83,7 +85,8 @@ namespace pktnn
         pktfc &forward(pktmat &x);
         pktlayer &forward(pktlayer &x);
         pktlayer &backward(pktmat &lastDeltasMat, int lrInv,
-                           int weight_lower_bound = -4095, int weight_upper_bound = 4096);
+                           int weight_lower_bound = config::weight_lower_bound,
+                           int weight_upper_bound = config::weight_upper_bound);
 
         // print functions
         pktfc &printWeight(std::ostream &outTo = std::cout);

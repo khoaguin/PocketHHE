@@ -13,6 +13,8 @@
 #include "pktnn_tools.h"
 #include "pktnn_consts.h"
 
+#include "../../../configs/config.h"
+
 namespace pktnn
 {
 
