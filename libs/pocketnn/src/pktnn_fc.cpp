@@ -164,6 +164,9 @@ pktfc &pktfc::forward(pktmat &xMat)
         }
     }
 
+    mWeight.clampMat(-127, 128);
+    mBias.clampMat(-127, 128);
+
     return *this;
 }
 

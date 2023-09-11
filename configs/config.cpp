@@ -7,7 +7,7 @@ namespace config
 {
     // === General parameters ===
     bool debugging = false;
-    bool verbose = true;
+    bool verbose = false;
     int dry_run = true;          // if true, only run a few examples
     int dry_run_num_samples = 1; // num samples to run when dry_run is true
     // === HE parameters - refer to the PASTA paper's benchmark on PASTA3 with SEAL ===

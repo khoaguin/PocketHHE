@@ -3,3 +3,4 @@ torch==2.0.1
 torchvision==0.15.2
 numpy==1.24.1
 idx2numpy==1.2.3
+pytorch-quantization==2.1.2

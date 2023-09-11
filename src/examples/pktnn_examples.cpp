@@ -746,7 +746,7 @@ namespace pktnn_examples
             {
                 best_test_acc = test_acc;
                 best_test_epoch = e;
-                testCorrect += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". ";
+                testCorrect += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". \n";
                 testCorrect += "save weights to " + config::save_weight_path + "\n";
                 fc1.saveWeight(config::save_weight_path);
                 fc1.saveBias(config::save_bias_path);
@@ -868,7 +868,7 @@ namespace pktnn_examples
                       const pktnn::pktmat &outputMatrix,
                       pktnn::pktfc &first_layer,
                       pktnn::pktfc &last_layer,
-                      std::string process)
+                      const std::string process)
     {
         first_layer.forward(inputMatrix);
         int numCorrect = 0;
@@ -1189,11 +1189,15 @@ namespace pktnn_examples
                 best_test_acc = test_acc;
                 best_test_epoch = e;
                 testOutputMessage += "found best test accuracy = " + std::to_string(best_test_acc) + " at epoch " + std::to_string(e) + ". ";
+                first_layer.saveWeight("weights/SpO2/square_nn/int/fc1_weight_100epochs_bz4_clamp128.csv");
+                last_layer.saveWeight("weights/SpO2/square_nn/int/fc2_weight_100epochs_bz4_clamp128.csv");
             }
         }
         std::cout << "Epoch | NumCorrect | TestAccuracy \n";
         std::cout << testOutputMessage;
         std::cout << "\n";
+
+        delete[] indices;
 
         return 1;
     }
@@ -1261,8 +1265,8 @@ namespace pktnn_examples
         pktnn::pktfc fc2(128, 1);
         std::cout << "Second FC layer - ";
         fc2.printWeightShape();
-        pktnn::pktactv::Actv a2 = pktnn::pktactv::Actv::pocket_sigmoid;
-        std::cout << "Second activation: sigmoid"
+        pktnn::pktactv::Actv a2 = pktnn::pktactv::Actv::square;
+        std::cout << "Second activation: square"
                   << "\n";
         fc1.useDfa(true).setActv(a1).setNextLayer(fc2);
         fc2.useDfa(true).setActv(a2);
