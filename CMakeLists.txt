@@ -14,6 +14,7 @@ set(PROJECT_SOURCE
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/examples/pktnn_examples.cpp
     ${SOURCE_DIR}/examples/hhe_pktnn_examples.cpp
+    ${SOURCE_DIR}/examples/quantization.cpp
     ${SOURCE_DIR}/util/sealhelper.cpp
     ${SOURCE_DIR}/util/pastahelper.cpp
     ${SOURCE_DIR}/util/utils.cpp

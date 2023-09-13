@@ -1,4 +1,5 @@
 #include "examples/pktnn_examples.h"
+#include "examples/quantization.h"
 #include "examples/hhe_pktnn_examples.h"
 
 int main()
@@ -18,6 +19,7 @@ int main()
     // - SpO2 (hypnogram) data -
     // pktnn_examples::fc_int_dfa_spo2_one_layer(); // training on hypnogram data using direct feedback alignment for the 1-layer nn
     // pktnn_examples::fc_int_dfa_spo2_square(); // training on SpO2 data with a network with 2 linear layers and a square activation function
+    quantization::square_nn_inference();
 
     // --- HHE examples ---
     // hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
