@@ -37,7 +37,7 @@ namespace quantization
         dequantize_per_row(output, w_scale_factor_inv, x_scale_factor_inv, N, M);
 
         if (hidden_layer)
-            relu(output, N * M);
+            square(output, N * M);
     }
 
     void quantize(const int *tensor_in, int8_t *tensor_q, const int scale_factor,

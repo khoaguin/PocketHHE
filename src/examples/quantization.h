@@ -1,16 +1,33 @@
 // Code based on https://github.com/benja263/Integer-Only-Inference-for-Deep-Learning-in-Native-C/
 
 #include "../util/utils.h"
+#include "../../configs/config.h"
 
 namespace quantization
 {
     void square_nn_inference(const int *x, const unsigned int N,
                              unsigned int *class_indices);
 
-    void linear_layer(const int *x, const int8_t *w, int *output, const int x_scale_factor,
-                      const int *w_scale_factor_inv, const int x_scale_factor_inv,
+    void linear_layer(const int *x, const int8_t *w, int *output,
+                      const int x_scale_factor, const int *w_scale_factor_inv, const int x_scale_factor_inv,
                       const unsigned int N, const unsigned int K,
                       const unsigned int M, const unsigned int not_output_layer);
+    /**
+     * @brief A neural network linear layer withthout bias  Y = Square(XW)
+     *  x is quantized before multiplication with w and then dequantized per-row granulity prior to the activation function
+     *
+     * @param x - NxK input matrix
+     * @param w - KxM layer weight matrix
+     * @param output - NxM output matrix
+     * @param x_amax_quant - amax value for quantization of input matrix
+     * @param x_w_amax_dequant - 1XM amax values for dequantization of Z=XW
+     * @param N
+     * @param K
+     * @param M
+     * @param hidden_layer - boolean value if layer is a hidden layer (activation)
+     *
+     * @return Void
+     */
 
     void quantize(const int *tensor_in, int8_t *tensor_q, const int scale_factor,
                   const int scale_factor_inv, const unsigned int size);
@@ -52,6 +69,19 @@ namespace quantization
      * @param scale_factor_x_inv - input inverse scale factor
      * @param N
      * @param M
+     * @return Void
+     */
+
+    void square(int *tensor, const unsigned int size)
+    {
+        for (unsigned int i = 0; i < size; i++)
+            tensor[i] = i * i;
+    }
+    /**
+     * @brief ReLU activation function
+     *
+     * @param tensor_in - input tensor
+     * @param size - size of flattened tensor
      * @return Void
      */
 
