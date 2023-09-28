@@ -357,5 +357,3 @@ MigrationBackup/
 
 *.ipynb_checkpoints
 notebooks/lightning_logs
-
-quant_he_code/
