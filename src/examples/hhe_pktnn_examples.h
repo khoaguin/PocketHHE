@@ -71,14 +71,17 @@ namespace hhe_pktnn_examples
         std::vector<seal::Ciphertext> enc_results;
     };
 
-    /*
-        Work in Progess
-    */
     int hhe_pktnn_ecg_inference();
 
     /*
         Work in Progress
     */
     int hhe_pktnn_mnist_inference();
+
+    /*
+        Work in Progress
+    */
+    int hhe_pktnn_spo2_inference();         // encrypted inference protocol on SpO2 data for the 1-layer nn
+    int hhe_pktnn_mnist_square_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc + square activation nn
 
 } // end of hhe_pktnn_examples namespace

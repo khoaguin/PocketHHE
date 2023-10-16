@@ -589,4 +589,18 @@ namespace hhe_pktnn_examples
         return 0;
     }
 
+    int hhe_pktnn_spo2_inference()
+    {
+        utils::print_example_banner("HHE Inference with a 1-FC Neural Network on Integer SpO2 data");
+
+        return 0;
+    }
+
+    int hhe_pktnn_mnist_square_inference()
+    {
+        utils::print_example_banner("HHE Inference with a 2-FC Neural Network with Square Activation on Integer MNIST / FMNIST data");
+
+        return 0;
+    }
+
 } // end of hhe_pktnn_examples namespace
