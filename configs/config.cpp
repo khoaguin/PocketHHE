@@ -25,7 +25,7 @@ namespace config
     // uint64_t plain_mod = 1096486890805657601;
     // uint64_t mod_degree = 32768;
 
-    // === General neural network parameters ===
+    // === General neural network parameters (only used for PocketNN training) ===
     int epoch = 50;
     int mini_batch_size = 4; // CAUTION: Too big minibatch size can cause overflow
     int lr_inv = 50;
@@ -33,7 +33,7 @@ namespace config
     int weight_upper_bound = 128;
     bool save_weights = true;
 
-    // === MNIST parameters ===
+    // === MNIST parameters (depricated) ===
     int num_test_samples = 5;
     int num_classes = 10;
     int mnist_rows = 28;
@@ -46,12 +46,14 @@ namespace config
     // int
 
     // === Paths to save and load weights ===
-    // weights for the ECG dataset
+    // --- weights for the ECG dataset ---
     // std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
     // std::string save_bias_path = "weights/ecg/ecg_512/fc1_bias_50epochs_bs4.csv";
-    // weights for the SpO2 dataset
+    // --- weights for the SpO2 dataset ---
     std::string save_weight_path = "weights/SpO2/int/fc1_weight_100epochs_bz4_clamp128.csv";
     std::string save_bias_path = "weights/SpO2/int/fc1_bias_100epochs_bs4_clamp128.csv";
+    // --- weights for the MNIST dataset ---
+    // --- weights for the FMNIST dataset ---
 
     // === Parameters to run experiments ===
     // uint64_t NUM_RUN = 50;

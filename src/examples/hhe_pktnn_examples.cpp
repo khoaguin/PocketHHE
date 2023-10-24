@@ -592,6 +592,29 @@ namespace hhe_pktnn_examples
     int hhe_pktnn_spo2_inference()
     {
         utils::print_example_banner("HHE Inference with a 1-FC Neural Network on Integer SpO2 data");
+        // the actors in the protocol
+        Analyst analyst;
+        Client client;
+        CSP csp;
+
+        // calculate the time (computation cost)
+        std::chrono::high_resolution_clock::time_point analyst_start_0, analyst_end_0, analyst_start_1, analyst_end_1;
+        std::chrono::high_resolution_clock::time_point client_start_0, client_end_0;
+        std::chrono::high_resolution_clock::time_point csp_start_0, csp_end_0;
+        std::chrono::milliseconds analyst_time_0, analyst_time_1, client_time_0, csp_time_0;
+
+        // ---------------------- Analyst ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Analyst ----------------------"
+                  << "\n";
+        analyst_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+
+        std::cout << "Analyst constructs the HE context"
+                  << "\n";
+        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context(
+            config::plain_mod, config::mod_degree, config::seclevel);
+        sealhelper::print_parameters(*context);
 
         return 0;
     }

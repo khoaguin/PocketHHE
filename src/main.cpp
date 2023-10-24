@@ -22,8 +22,8 @@ int main()
     // --- HHE examples ---
     // hhe_pktnn_examples::hhe_pktnn_ecg_inference();       // encrypted inference protocol on ECG for the 1-layer nn
     // hhe_pktnn_examples::hhe_pktnn_mnist_inference();     // encrypted inference protocol on MNIST for the 1-layer nn
-    hhe_pktnn_examples::hhe_pktnn_spo2_inference();         // encrypted inference protocol on SpO2 data for the 1-layer nn
-    hhe_pktnn_examples::hhe_pktnn_mnist_square_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc + square activation nn
+    hhe_pktnn_examples::hhe_pktnn_spo2_inference(); // encrypted inference protocol on SpO2 data for the 1-layer nn
+    // hhe_pktnn_examples::hhe_pktnn_mnist_square_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc + square activation nn
 
     return 0;
 }
