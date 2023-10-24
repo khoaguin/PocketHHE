@@ -50,8 +50,8 @@ namespace config
     // std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
     // std::string save_bias_path = "weights/ecg/ecg_512/fc1_bias_50epochs_bs4.csv";
     // --- weights for the SpO2 dataset ---
-    std::string save_weight_path = "weights/SpO2/int/fc1_weight_100epochs_bz4_clamp128.csv";
-    std::string save_bias_path = "weights/SpO2/int/fc1_bias_100epochs_bs4_clamp128.csv";
+    std::string save_weight_path = "weights/SpO2/qat/quant_fc_5bits_data_2bits_weights.csv";
+    std::string save_bias_path = "";
     // --- weights for the MNIST dataset ---
     // --- weights for the FMNIST dataset ---
 

@@ -481,6 +481,7 @@ void pktnn::pktfc::saveBias(std::string fileName)
 
 void pktnn::pktfc::loadWeight(std::string fileName)
 {
+    // TODO: throw error if dimension of mWeight and filename mismatch
     std::cout << "Loading weight from " << fileName << "\n";
     mWeight.readFromCSV(fileName);
 }
