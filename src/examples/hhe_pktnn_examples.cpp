@@ -615,6 +615,19 @@ namespace hhe_pktnn_examples
         std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context(
             config::plain_mod, config::mod_degree, config::seclevel);
         sealhelper::print_parameters(*context);
+        std::cout << "Analyst creates the HE keys, batch encoder, encryptor and evaluator from the context"
+                  << "\n";
+        seal::KeyGenerator keygen(*context);
+        analyst.he_sk = keygen.secret_key();     // HE secret key for decryption
+        keygen.create_public_key(analyst.he_pk); // HE public key for encryption
+        keygen.create_relin_keys(analyst.he_rk); // HE relinearization key to reduce noise in ciphertexts
+        seal::BatchEncoder analyst_he_benc(*context);
+        bool use_bsgs = false;
+        std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
+        keygen.create_galois_keys(gk_indices, analyst.he_gk); // the HE Galois keys for batch computation
+        seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
+        seal::Evaluator analyst_he_eval(*context);
+        seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
 
         utils::print_line(__LINE__);
         std::cout << "Analyst creates the neural network, loads the pretrained weights and biases"
@@ -635,6 +648,93 @@ namespace hhe_pktnn_examples
                   << std::endl;
         // get the weights and biases to encrypt later
         analyst.weight = fc.getWeight();
+        std::cout << "Ignoring bias"
+                  << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst encrypts the weights using HE"
+                  << "\n";
+        pktnn::pktmat fc_weight_t;
+        fc_weight_t.transposeOf(analyst.weight);
+        fc_weight_t.printShape();
+        analyst.enc_weight = sealhelper::encrypt_weight(fc_weight_t,
+                                                        analyst.he_pk,
+                                                        analyst_he_benc,
+                                                        analyst_he_enc);
+        std::cout << "Encrypt the weight...";
+        std::cout << "The encrypted weight vector has " << analyst.enc_weight.size() << " ciphertexts\n";
+        ecg_test::test_encrypted_weight(analyst.enc_weight,
+                                        fc_weight_t,
+                                        analyst.he_sk,
+                                        analyst_he_benc,
+                                        analyst_he_dec,
+                                        300);
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst sends the HE keys (except the secret key) to the CSP..."
+                  << "\n";
+        csp.he_gk = &analyst.he_gk;
+        csp.he_pk = &analyst.he_pk;
+        csp.he_rk = &analyst.he_rk;
+        // calculate the commnication overhead (in MB)
+        float he_pk_size = sealhelper::he_pk_key_size(analyst.he_pk, false);
+        float he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst sends the encrypted weight to the CSP..."
+                  << "\n";
+        csp.enc_weight = &analyst.enc_weight;
+        csp.enc_bias = &analyst.enc_bias;
+        // calculate the size of encrypted weights and biases (in MB)
+        float enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
+        analyst_end_0 = std::chrono::high_resolution_clock::now();
+        analyst_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(analyst_end_0 - analyst_start_0);
+
+        // ---------------------- Client (Data Owner) ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Client (Data Owner) ----------------------"
+                  << "\n";
+        client_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+
+        utils::print_line(__LINE__);
+        std::cout << "Client loads his SpO2 test data" << std::endl;
+        int numTestSamples = 24918;
+        pktnn::pktmat SpO2TestInput(numTestSamples, 300);
+        pktnn::pktmat SpO2TestLabels(numTestSamples, 1);
+        pktnn::pktloader::loadTimeSeriesData(SpO2TestInput, "data/SpO2/SpO2_input_cleaned4%.csv",
+                                             numTestSamples, config::debugging);
+        SpO2TestInput.printShape();
+        pktnn::pktloader::loadTimeSeriesLabels(SpO2TestLabels, "data/SpO2/SpO2_output_cleaned4%.csv",
+                                               numTestSamples, config::debugging);
+        SpO2TestLabels.printShape();
+
+        if (config::dry_run) // get a slice of dry_run data samples
+        {
+            int dryRunNumSamples = config::dry_run_num_samples;
+            std::cout << "Dry run: get a slice of " << dryRunNumSamples << " data samples"
+                      << "\n";
+            client.testData.sliceOf(SpO2TestInput, 0, dryRunNumSamples - 1, 0, 299);
+            client.testLabels.sliceOf(SpO2TestLabels, 0, dryRunNumSamples - 1, 0, 0);
+        }
+        else
+        {
+            client.testData = SpO2TestInput;
+            client.testLabels = SpO2TestLabels;
+        }
+
+        std::cout << "client test data shape = ";
+        client.testData.printShape();
+        std::cout << "client test labels shape = ";
+        client.testLabels.printShape();
+        std::cout << "max input value = " << client.testData.getMax()
+                  << std::endl;
+        std::cout << "min input value = " << client.testData.getMin()
+                  << std::endl;
+        std::cout << "max label value = " << client.testLabels.getMax()
+                  << std::endl;
+        std::cout << "min label value = " << client.testLabels.getMin()
+                  << std::endl;
 
         return 0;
     }

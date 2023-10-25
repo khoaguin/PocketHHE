@@ -15,6 +15,7 @@ namespace ecg_test
         // utils::print_vec(decrypted_row, 128, "decrypted row", ",\n");
         std::vector<int64_t> org_row = original_weight.getRow(0);
         assert(decrypted_row == org_row);
+        std::cout << "Test pass: Decrypted weights are equal to plaintext weights" << std::endl;
         return 0;
     }
 
