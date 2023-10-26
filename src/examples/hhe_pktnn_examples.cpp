@@ -714,8 +714,16 @@ namespace hhe_pktnn_examples
             int dryRunNumSamples = config::dry_run_num_samples;
             std::cout << "Dry run: get a slice of " << dryRunNumSamples << " data samples"
                       << "\n";
-            client.testData.sliceOf(SpO2TestInput, 0, dryRunNumSamples - 1, 0, 299);
-            client.testLabels.sliceOf(SpO2TestLabels, 0, dryRunNumSamples - 1, 0, 0);
+            if (dryRunNumSamples == 1)
+            {
+                client.testData.sliceOf(SpO2TestInput, 1, 1, 0, 299);
+                client.testLabels.sliceOf(SpO2TestLabels, 1, 1, 0, 0);
+            }
+            else
+            {
+                client.testData.sliceOf(SpO2TestInput, 0, dryRunNumSamples - 1, 0, 299);
+                client.testLabels.sliceOf(SpO2TestLabels, 0, dryRunNumSamples - 1, 0, 0);
+            }
         }
         else
         {
@@ -735,6 +743,75 @@ namespace hhe_pktnn_examples
                   << std::endl;
         std::cout << "min label value = " << client.testLabels.getMin()
                   << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Client creates the symmetric key" << std::endl;
+        client.k = pastahelper::get_symmetric_key();
+        std::cout << "Symmetric key size: " << client.k.size() << "\n";
+        // utils::print_vec(client.k, client.k.size(), "Symmetric key: ");
+
+        utils::print_line(__LINE__);
+        std::cout << "Client encrypts his symmetric key using HE" << std::endl;
+        client.c_k = pastahelper::encrypt_symmetric_key(client.k, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
+
+        utils::print_line(__LINE__);
+        std::cout << "Client symmetrically encrypts his SpO2 data" << std::endl;
+        pasta::PASTA SymmetricEncryptor(client.k, config::plain_mod);
+        client.cs = pastahelper::symmetric_encrypt(SymmetricEncryptor, client.testData); // the symmetric encrypted images
+        std::cout << "The symmetric encrypted data has " << client.cs.size() << " ciphertexts\n";
+
+        utils::print_line(__LINE__);
+        std::cout << "The client sends the symmetric encrypted data and the HE encrypted symmetric key to the CSP..."
+                  << "\n";
+        csp.c_k = &client.c_k;
+        csp.cs = &client.cs;
+        // calculate the size of the symmetric encrypted data and HE encrypted symmetric key (in MB)
+        float sym_enc_data_size = pastahelper::sym_enc_data_size(client.cs, true);
+        float he_enc_sym_key_size = sealhelper::he_vec_size(client.c_k, true, "HE encrypted symmetric key");
+        client_end_0 = std::chrono::high_resolution_clock::now();
+        client_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(client_end_0 - client_start_0);
+        std::cout << "HE symmetric key size: " << he_enc_sym_key_size << " (MB)" << std::endl;
+        // std::cout << "HE symmetric key size: " << client.c_k[0].save_size() * 1e-6f << " (MB)" << std::endl;
+        std::cout << "The symmetric encrypted data size: " << sym_enc_data_size << " ciphertexts\n";
+
+        // -------------------------- CSP (server) ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "-------------------------- CSP ----------------------" << std::endl;
+        csp_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+
+        utils::print_line(__LINE__);
+        // Construct necessary components to run decomposition
+        seal::KeyGenerator csp_keygen(*context);
+        csp.he_sk = csp_keygen.secret_key(); // CSP create his own secret key
+        pasta::PASTA_SEAL HHE(context, *csp.he_pk, csp.he_sk, *csp.he_rk, *csp.he_gk);
+        std::cout << "CSP runs the decomposition algorithm to turn the "
+                  << "symmetric encrypted data into HE encrypted data " << std::endl;
+        for (std::vector<uint64_t> c : *csp.cs)
+        {
+            std::vector<seal::Ciphertext> c_prime = HHE.decomposition(c, *csp.c_k, config::USE_BATCH);
+            if (c_prime.size() == 1)
+            {
+                csp.c_primes.push_back(c_prime[0]);
+
+                // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key
+                // to check if the decryption is same as the plaintext data of the client
+                std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
+                utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ", "\n");
+            }
+            else
+            {
+                std::cout << "c_prime.size() = " << c_prime.size() << std::endl;
+                std::cout << "there are more than 1 seal ciphertexts in the each decomposed ciphertext\n";
+                std::cout << "we need to do some post-processing\n";
+                for (auto z : c_prime)
+                {
+                    std::vector<int64_t> dec_c_prime = sealhelper::decrypting(z, analyst.he_sk, analyst_he_benc, *context, 128);
+                    utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ", "\n");
+                }
+            }
+        }
+        // std::cout << "There are " << csp.c_primes.size() << " decomposed HE ciphertexts\n";
 
         return 0;
     }
