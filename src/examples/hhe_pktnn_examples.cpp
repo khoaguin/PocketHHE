@@ -657,18 +657,12 @@ namespace hhe_pktnn_examples
         pktnn::pktmat fc_weight_t;
         fc_weight_t.transposeOf(analyst.weight);
         fc_weight_t.printShape();
-        analyst.enc_weight = sealhelper::encrypt_weight(fc_weight_t,
-                                                        analyst.he_pk,
-                                                        analyst_he_benc,
-                                                        analyst_he_enc);
+        analyst.enc_weight = sealhelper::encrypt_weight(
+            fc_weight_t, analyst.he_pk, analyst_he_benc, analyst_he_enc);
         std::cout << "Encrypt the weight...";
         std::cout << "The encrypted weight vector has " << analyst.enc_weight.size() << " ciphertexts\n";
-        ecg_test::test_encrypted_weight(analyst.enc_weight,
-                                        fc_weight_t,
-                                        analyst.he_sk,
-                                        analyst_he_benc,
-                                        analyst_he_dec,
-                                        300);
+        ecg_test::test_encrypted_weight(
+            analyst.enc_weight, fc_weight_t, analyst.he_sk, analyst_he_benc, analyst_he_dec, 300);
 
         utils::print_line(__LINE__);
         std::cout << "Analyst sends the HE keys (except the secret key) to the CSP..."
@@ -678,7 +672,8 @@ namespace hhe_pktnn_examples
         csp.he_rk = &analyst.he_rk;
         // calculate the commnication overhead (in MB)
         float he_pk_size = sealhelper::he_pk_key_size(analyst.he_pk, false);
-        float he_keys_size = sealhelper::he_key_size(analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
+        float he_keys_size = sealhelper::he_key_size(
+            analyst.he_pk, analyst.he_rk, analyst.he_gk, true);
 
         utils::print_line(__LINE__);
         std::cout << "Analyst sends the encrypted weight to the CSP..."
@@ -686,7 +681,8 @@ namespace hhe_pktnn_examples
         csp.enc_weight = &analyst.enc_weight;
         csp.enc_bias = &analyst.enc_bias;
         // calculate the size of encrypted weights and biases (in MB)
-        float enc_weight_bias_size = sealhelper::enc_weight_bias_size(analyst.enc_weight, analyst.enc_bias, true, true);
+        float enc_weight_bias_size = sealhelper::enc_weight_bias_size(
+            analyst.enc_weight, analyst.enc_bias, true, true);
         analyst_end_0 = std::chrono::high_resolution_clock::now();
         analyst_time_0 = std::chrono::duration_cast<std::chrono::milliseconds>(analyst_end_0 - analyst_start_0);
 
@@ -752,7 +748,8 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "Client encrypts his symmetric key using HE" << std::endl;
-        client.c_k = pastahelper::encrypt_symmetric_key(client.k, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
+        client.c_k = pastahelper::encrypt_symmetric_key(
+            client.k, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
 
         utils::print_line(__LINE__);
         std::cout << "Client symmetrically encrypts his SpO2 data" << std::endl;
@@ -796,7 +793,8 @@ namespace hhe_pktnn_examples
 
                 // --- for debugging: we decrypt the decomposed ciphertexts with the analyst's secret key
                 // to check if the decryption is same as the plaintext data of the client
-                std::vector<int64_t> dec_c_prime = sealhelper::decrypting(c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
+                std::vector<int64_t> dec_c_prime = sealhelper::decrypting(
+                    c_prime[0], analyst.he_sk, analyst_he_benc, *context, 128);
                 utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ", "\n");
             }
             else
@@ -804,14 +802,15 @@ namespace hhe_pktnn_examples
                 std::cout << "c_prime.size() = " << c_prime.size() << std::endl;
                 std::cout << "there are more than 1 seal ciphertexts in the each decomposed ciphertext\n";
                 std::cout << "we need to do some post-processing\n";
-                for (auto z : c_prime)
+                // Test: decrypting the decomposed HE ciphertext
+                for (seal::Ciphertext z : c_prime)
                 {
-                    std::vector<int64_t> dec_c_prime = sealhelper::decrypting(z, analyst.he_sk, analyst_he_benc, *context, 128);
+                    std::vector<int64_t> dec_c_prime = sealhelper::decrypting(
+                        z, analyst.he_sk, analyst_he_benc, *context, 128);
                     utils::print_vec(dec_c_prime, dec_c_prime.size(), "decrypted c_prime ", "\n");
                 }
             }
         }
-        // std::cout << "There are " << csp.c_primes.size() << " decomposed HE ciphertexts\n";
 
         return 0;
     }

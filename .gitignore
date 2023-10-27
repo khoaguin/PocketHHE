@@ -357,3 +357,5 @@ MigrationBackup/
 
 *.ipynb_checkpoints
 notebooks/lightning_logs
+
+libs/pasta3/
