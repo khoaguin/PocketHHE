@@ -871,16 +871,17 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "Analyst loads the pretrained weights"
                   << "\n";
-        matrix::int_matrix weights;
+        matrix::matrix weights;
         if (config::debugging)
         {
-            weights = matrix::read_from_csv<int64_t>("../" + config::save_weight_path);
+            weights = matrix::read_from_csv("../" + config::save_weight_path);
         }
         else
         {
-            weights = matrix::read_from_csv<int64_t>(config::save_weight_path);
+            weights = matrix::read_from_csv(config::save_weight_path);
         }
         std::cout << "Reading weights from " << config::save_weight_path << std::endl;
+        // matrix::print_matrix(weights);
         matrix::print_matrix_shape(weights);
         matrix::print_matrix_stats(weights);
 
@@ -892,7 +893,7 @@ namespace hhe_pktnn_examples
         client_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
         utils::print_line(__LINE__);
         std::cout << "Client loads his input data from " << config::dataset_input_path << std::endl;
-        matrix::matrix data = matrix::read_from_csv<uint64_t>(config::dataset_input_path);
+        matrix::matrix data = matrix::read_from_csv(config::dataset_input_path);
         // matrix::print_matrix(data);
         matrix::print_matrix_shape(data);
         matrix::print_matrix_stats(data);

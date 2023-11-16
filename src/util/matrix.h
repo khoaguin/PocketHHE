@@ -7,11 +7,9 @@
 
 namespace matrix
 {
-    typedef std::vector<uint64_t> vector;
-    typedef std::vector<int64_t> int_vector;
-    typedef std::vector<std::vector<uint64_t>> matrix;
-    typedef std::vector<std::vector<int64_t>> int_matrix;
-    typedef __uint128_t uint128_t;
+    using vector = std::vector<int64_t>;
+    using matrix = std::vector<std::vector<int64_t>>;
+    using uint128_t = __uint128_t;
 
     static void matMul(vector &vo, const matrix &M, const vector &vi,
                        size_t modulus)
@@ -64,8 +62,7 @@ namespace matrix
             vo[row] = ((((uint128_t)vi[row]) * vi[row]) % modulus);
     }
 
-    template <typename T>
-    static void print_matrix_shape(const std::vector<std::vector<T>> &m)
+    static void print_matrix_shape(const matrix &m)
     {
         if (m.empty() || m[0].empty())
         {
@@ -78,8 +75,7 @@ namespace matrix
         std::cout << "rows = " << rows << "; cols = " << cols << std::endl;
     }
 
-    template <typename T>
-    static void print_matrix(const std::vector<std::vector<T>> &m)
+    static void print_matrix(const matrix &m)
     {
         if (m.empty() || m[0].empty())
         {
@@ -99,10 +95,9 @@ namespace matrix
         }
     }
 
-    template <typename T>
-    static std::vector<std::vector<T>> read_from_csv(const std::string &filename)
+    static matrix read_from_csv(const std::string &filename)
     {
-        std::vector<std::vector<T>> mat;
+        matrix mat;
         std::ifstream file(filename);
         std::string line;
 
@@ -115,18 +110,11 @@ namespace matrix
         {
             std::stringstream ss(line);
             std::string cell;
-            std::vector<T> row;
+            std::vector<int64_t> row;
 
             while (getline(ss, cell, ','))
             {
-                if constexpr (std::is_same<T, uint64_t>::value)
-                {
-                    row.push_back(std::stoull(cell));
-                }
-                else if constexpr (std::is_same<T, int64_t>::value)
-                {
-                    row.push_back(std::stoll(cell));
-                }
+                row.push_back(std::stoll(cell));
             }
             mat.push_back(row);
         }
@@ -134,8 +122,7 @@ namespace matrix
         return mat;
     }
 
-    template <typename T>
-    static void print_matrix_stats(const std::vector<std::vector<T>> &m)
+    static void print_matrix_stats(const matrix &m)
     {
         if (m.empty() || m[0].empty())
         {
@@ -143,14 +130,14 @@ namespace matrix
             return;
         }
 
-        T maxVal = std::numeric_limits<T>::lowest();
-        T minVal = std::numeric_limits<T>::max();
+        int64_t maxVal = std::numeric_limits<int64_t>::lowest();
+        int64_t minVal = std::numeric_limits<int64_t>::max();
         double sum = 0;
         size_t count = 0;
 
         for (const auto &row : m)
         {
-            for (T val : row)
+            for (int64_t val : row)
             {
                 maxVal = std::max(maxVal, val);
                 minVal = std::min(minVal, val);
