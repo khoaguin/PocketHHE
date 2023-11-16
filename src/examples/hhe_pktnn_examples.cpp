@@ -330,8 +330,8 @@ namespace hhe_pktnn_examples
         // divide bias by 128
         int old_bias = analyst.bias.getElem(0, 0);
         analyst.bias.setElem(0, 0, (int)old_bias / 128);
-        // analyst.weight.printMat();
-        // analyst.bias.printMat();
+        analyst.weight.printMat();
+        analyst.bias.printMat();
 
         utils::print_line(__LINE__);
         std::cout << "Analyst encrypts the weights and biases using HE"
@@ -657,6 +657,7 @@ namespace hhe_pktnn_examples
         pktnn::pktmat fc_weight_t;
         fc_weight_t.transposeOf(analyst.weight);
         fc_weight_t.printShape();
+        fc_weight_t.printMat();
         analyst.enc_weight = sealhelper::encrypt_weight(
             fc_weight_t, analyst.he_pk, analyst_he_benc, analyst_he_enc);
         std::cout << "Encrypt the weight...";
@@ -701,6 +702,7 @@ namespace hhe_pktnn_examples
         pktnn::pktloader::loadTimeSeriesData(SpO2TestInput, "data/SpO2/SpO2_input_cleaned4%.csv",
                                              numTestSamples, config::debugging);
         SpO2TestInput.printShape();
+        // SpO2TestInput.printMat();
         pktnn::pktloader::loadTimeSeriesLabels(SpO2TestLabels, "data/SpO2/SpO2_output_cleaned4%.csv",
                                                numTestSamples, config::debugging);
         SpO2TestLabels.printShape();
@@ -815,10 +817,107 @@ namespace hhe_pktnn_examples
         return 0;
     }
 
-    int hhe_pktnn_mnist_square_inference()
+    int hhe_pktnn_1fc_inference(std::string dataset)
     {
-        utils::print_example_banner("HHE Inference with a 2-FC Neural Network with Square Activation on Integer MNIST / FMNIST data");
+        std::cout << "--- HHE Inference with a 1-FC Neural Network on Encrypted "
+                  << dataset << " data ---"
+                  << std::endl;
 
+        // check if the lowercase of the `dataset` string is either "spo2" or "mnist"
+        std::string lowerStr = dataset;
+        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+        if (lowerStr != "spo2" && lowerStr != "mnist")
+        {
+            throw std::runtime_error("Dataset must be either SpO2 or MNIST");
+        }
+
+        // the actors in the protocol
+        Analyst analyst;
+        Client client;
+        CSP csp;
+
+        // calculate the time (computation cost)
+        std::chrono::high_resolution_clock::time_point analyst_start_0, analyst_end_0, analyst_start_1, analyst_end_1;
+        std::chrono::high_resolution_clock::time_point client_start_0, client_end_0;
+        std::chrono::high_resolution_clock::time_point csp_start_0, csp_end_0;
+        std::chrono::milliseconds analyst_time_0, analyst_time_1, client_time_0, csp_time_0;
+
+        // ---------------------- Analyst ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Analyst ----------------------"
+                  << "\n";
+        analyst_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+
+        std::cout << "Analyst constructs the HE context"
+                  << "\n";
+        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context(config::plain_mod, config::mod_degree, config::seclevel);
+        sealhelper::print_parameters(*context);
+        utils::print_line(__LINE__);
+        std::cout << "Analyst creates the HE keys, batch encoder, encryptor and evaluator from the context"
+                  << "\n";
+        seal::KeyGenerator keygen(*context);
+        analyst.he_sk = keygen.secret_key();     // HE secret key for decryption
+        keygen.create_public_key(analyst.he_pk); // HE public key for encryption
+        keygen.create_relin_keys(analyst.he_rk); // HE relinearization key to reduce noise in ciphertexts
+        seal::BatchEncoder analyst_he_benc(*context);
+        bool use_bsgs = false;
+        std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
+        keygen.create_galois_keys(gk_indices, analyst.he_gk); // the HE Galois keys for batch computation
+        seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
+        seal::Evaluator analyst_he_eval(*context);
+        seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst loads the pretrained weights"
+                  << "\n";
+        matrix::int_matrix weights;
+        if (config::debugging)
+        {
+            weights = matrix::read_from_csv<int64_t>("../" + config::save_weight_path);
+        }
+        else
+        {
+            weights = matrix::read_from_csv<int64_t>(config::save_weight_path);
+        }
+        std::cout << "Reading weights from " << config::save_weight_path << std::endl;
+        matrix::print_matrix_shape(weights);
+        matrix::print_matrix_stats(weights);
+
+        // ---------------------- Client (Data Owner) ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Client (Data Owner) ----------------------"
+                  << "\n";
+        client_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
+        utils::print_line(__LINE__);
+        std::cout << "Client loads his input data from " << config::dataset_input_path << std::endl;
+        matrix::matrix data = matrix::read_from_csv<uint64_t>(config::dataset_input_path);
+        // matrix::print_matrix(data);
+        matrix::print_matrix_shape(data);
+        matrix::print_matrix_stats(data);
+
+        std::cout << "--- Computing in plain ---" << std::endl;
+
+        // matrix::vector vo;
+        // matrix::vector vo_p(N);
+        // matrix::vector vi_tmp;
+        // vi_tmp = vi;
+
+        // for (size_t r = 0; r < 1; r++)
+        // {
+        //     matrix::affine(vo, weights, vi_tmp, b[r], plain_mod);
+        // }
+        // std::cout << "output vector vo.size() = " << vo.size() << ";\n";
+        // std::cout << "vo = ";
+        // std::for_each(vo.cbegin(), vo.cend(), print);
+        // std::cout << std::endl;
+
+        return 0;
+    }
+
+    int hhe_pktnn_2fc_inference()
+    {
         return 0;
     }
 

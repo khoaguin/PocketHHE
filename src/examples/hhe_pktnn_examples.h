@@ -11,8 +11,10 @@
 #include "../util/sealhelper.h"
 #include "../util/pastahelper.h"
 #include "../util/utils.h"
+#include "../util/matrix.h"
 #include "../pasta/pasta_3_plain.h"
 #include "../pasta/pasta_3_seal.h"
+#include "../../tests/ecg_tests.h"
 #include "../../tests/ecg_tests.h"
 
 namespace hhe_pktnn_examples
@@ -74,14 +76,15 @@ namespace hhe_pktnn_examples
     int hhe_pktnn_ecg_inference();
 
     /*
-        Work in Progress
+        Experimental: Probably will be removed
     */
     int hhe_pktnn_mnist_inference();
+    int hhe_pktnn_spo2_inference(); // encrypted inference protocol on SpO2 data for the 1-layer nn
 
     /*
         Work in Progress
     */
-    int hhe_pktnn_spo2_inference();         // encrypted inference protocol on SpO2 data for the 1-layer nn
-    int hhe_pktnn_mnist_square_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc + square activation nn
+    int hhe_pktnn_1fc_inference(std::string dataset); // encrypted inference protocol on SpO2 / MNIST data for the 1-layer nn
+    int hhe_pktnn_2fc_inference();                    // // encrypted inference protocol on MNIST / FMNIST data for the 2fc layer nn with square activation
 
 } // end of hhe_pktnn_examples namespace

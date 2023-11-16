@@ -45,6 +45,9 @@ namespace config
     // === Square NN parameters ===
     // int
 
+    // === Paths to the dataset ===
+    std::string dataset_input_path = "data/SpO2/SpO2_input_cleaned4%.csv";
+    std::string dataset_output_path = "data/SpO2/SpO2_output_cleaned4%.csv";
     // === Paths to save and load weights ===
     // --- weights for the ECG dataset ---
     // std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";

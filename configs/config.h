@@ -31,6 +31,9 @@ namespace config
     extern int dim_input;
     extern int dim_layer1;
     extern int dim_layer2;
+    // === Paths to the dataset path ===
+    extern std::string dataset_input_path;
+    extern std::string dataset_output_path;
     // === Paths to save and load weights ===
     extern std::string save_weight_path;
     extern std::string save_bias_path;
