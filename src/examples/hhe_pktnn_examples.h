@@ -84,7 +84,7 @@ namespace hhe_pktnn_examples
     /*
         Work in Progress
     */
-    int hhe_pktnn_1fc_inference(std::string dataset); // encrypted inference protocol on SpO2 / MNIST data for the 1-layer nn
-    int hhe_pktnn_2fc_inference();                    // // encrypted inference protocol on MNIST / FMNIST data for the 2fc layer nn with square activation
+    int hhe_pktnn_1fc_inference(const std::string &dataset); // encrypted inference protocol on SpO2 / MNIST data for the 1-layer nn
+    int hhe_pktnn_2fc_inference(const std::string &dataset); // encrypted inference protocol on MNIST / FMNIST data for the 2fc layer nn with square activation
 
 } // end of hhe_pktnn_examples namespace

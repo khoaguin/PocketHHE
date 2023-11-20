@@ -817,7 +817,7 @@ namespace hhe_pktnn_examples
         return 0;
     }
 
-    int hhe_pktnn_1fc_inference(std::string dataset)
+    int hhe_pktnn_1fc_inference(const std::string &dataset)
     {
         std::cout << "--- HHE Inference with a 1-FC Neural Network on Encrypted "
                   << dataset << " data ---"
@@ -841,6 +841,9 @@ namespace hhe_pktnn_examples
         std::chrono::high_resolution_clock::time_point client_start_0, client_end_0;
         std::chrono::high_resolution_clock::time_point csp_start_0, csp_end_0;
         std::chrono::milliseconds analyst_time_0, analyst_time_1, client_time_0, csp_time_0;
+        // util function to print vectors
+        auto print = [](const int &n)
+        { std::cout << n << ' '; };
 
         // ---------------------- Analyst ----------------------
         std::cout << "\n";
@@ -881,9 +884,21 @@ namespace hhe_pktnn_examples
             weights = matrix::read_from_csv(config::save_weight_path);
         }
         std::cout << "Reading weights from " << config::save_weight_path << std::endl;
-        // matrix::print_matrix(weights);
         matrix::print_matrix_shape(weights);
         matrix::print_matrix_stats(weights);
+        // matrix::print_matrix(weights);
+        std::cout << "Transposed weights: " << std::endl;
+        matrix::matrix weights_t = matrix::transpose(weights);
+        matrix::print_matrix_shape(weights_t);
+        matrix::print_matrix(weights_t);
+
+        // bias (all 0s)
+        std::cout << "Bias = ";
+        matrix::vector bias;
+        bias.reserve(1);
+        bias.push_back(0);
+        std::cout << "bias shape = " << bias.size() << std::endl;
+        std::for_each(bias.cbegin(), bias.cend(), print);
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
@@ -898,18 +913,13 @@ namespace hhe_pktnn_examples
         matrix::print_matrix_shape(data);
         matrix::print_matrix_stats(data);
 
-        std::cout << "--- Computing in plain ---" << std::endl;
-
-        // matrix::vector vo;
-        // matrix::vector vo_p(N);
-        // matrix::vector vi_tmp;
-        // vi_tmp = vi;
-
-        // for (size_t r = 0; r < 1; r++)
-        // {
-        //     matrix::affine(vo, weights, vi_tmp, b[r], plain_mod);
-        // }
-        // std::cout << "output vector vo.size() = " << vo.size() << ";\n";
+        std::cout << "\n--- Computing in plain on 1 input vector ---" << std::endl;
+        matrix::vector vo(1);
+        matrix::vector vi = data[1];
+        std::cout << "input vector vi.size() = " << vi.size() << ";\n";
+        std::for_each(vi.cbegin(), vi.cend(), print);
+        matrix::matMul(vo, weights_t, vi, config::plain_mod);
+        std::cout << "output vector vo.size() = " << vo.size() << ";\n";
         // std::cout << "vo = ";
         // std::for_each(vo.cbegin(), vo.cend(), print);
         // std::cout << std::endl;
@@ -917,8 +927,11 @@ namespace hhe_pktnn_examples
         return 0;
     }
 
-    int hhe_pktnn_2fc_inference()
+    int hhe_pktnn_2fc_inference(const std::string &dataset)
     {
+        std::cout << "--- HHE Inference with a 2-FC Neural Network with Square Activation on Encrypted "
+                  << dataset << " data ---"
+                  << std::endl;
         return 0;
     }
 

@@ -17,16 +17,25 @@ namespace matrix
         size_t cols = vi.size();
         size_t rows = M.size();
 
+        std::cout << "\nrows = " << rows << "; ";
+        std::cout << "cols = " << cols << "\n";
+
         if (vo.size() != rows)
             vo.resize(rows);
 
         for (size_t row = 0; row < rows; row++)
         {
-            vo[row] = (((uint128_t)vi[0]) * M[row][0]) % modulus;
+            vo[row] = ((vi[0]) * M[row][0]) % modulus;
+            // std::cout << "vi[0] = " << vi[0] << "; ";
+            // std::cout << "M[row][0] = " << M[row][0] << std::endl;
+            // std::cout << "vo[row] = " << vo[row] << std::endl;
             for (size_t col = 1; col < cols; col++)
             {
-                vo[row] += ((((uint128_t)vi[col]) * M[row][col]) % modulus);
+                vo[row] += (((vi[col]) * M[row][col]) % modulus);
                 vo[row] %= modulus;
+                std::cout << "row " << row ""
+                // std::cout << "M[row][col] = " << M[row][col] << std::endl;
+                // std::cout << "vi[col] = " << vi[col] << "; ";
             }
         }
     }
@@ -59,7 +68,7 @@ namespace matrix
             vo.resize(rows);
 
         for (size_t row = 0; row < vi.size(); row++)
-            vo[row] = ((((uint128_t)vi[row]) * vi[row]) % modulus);
+            vo[row] = (((vi[row]) * vi[row]) % modulus);
     }
 
     static void print_matrix_shape(const matrix &m)
@@ -69,10 +78,9 @@ namespace matrix
             std::cout << "Matrix is empty" << std::endl;
             return;
         }
-
         size_t rows = m.size();
         size_t cols = m[0].size();
-        std::cout << "rows = " << rows << "; cols = " << cols << std::endl;
+        std::cout << "Shape = [" << rows << ", " << cols << "]" << std::endl;
     }
 
     static void print_matrix(const matrix &m)
@@ -151,6 +159,29 @@ namespace matrix
         std::cout << "Maximum Value: " << maxVal << std::endl;
         std::cout << "Minimum Value: " << minVal << std::endl;
         std::cout << "Average Value: " << avg << std::endl;
+    }
+
+    static matrix transpose(const matrix &m)
+    {
+        // Check if the matrix is empty
+        if (m.empty())
+            return {};
+
+        size_t rows = m.size();
+        size_t cols = m[0].size();
+
+        // Create a new matrix with flipped dimensions
+        matrix m_t(cols, std::vector<int64_t>(rows));
+
+        for (size_t i = 0; i < rows; ++i)
+        {
+            for (size_t j = 0; j < cols; ++j)
+            {
+                m_t[j][i] = m[i][j];
+            }
+        }
+
+        return m_t;
     }
 
 } // namespace matrix
