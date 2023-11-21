@@ -913,16 +913,40 @@ namespace hhe_pktnn_examples
         matrix::print_matrix_shape(data);
         matrix::print_matrix_stats(data);
 
-        std::cout << "\n--- Computing in plain on 1 input vector ---" << std::endl;
-        matrix::vector vo(1);
+        std::cout << "\n--- (Check) Computing in plain on 1 input vectors ---" << std::endl;
+        matrix::vector vo_p(1);
         matrix::vector vi = data[1];
         std::cout << "input vector vi.size() = " << vi.size() << ";\n";
         std::for_each(vi.cbegin(), vi.cend(), print);
-        matrix::matMul(vo, weights_t, vi, config::plain_mod);
-        std::cout << "output vector vo.size() = " << vo.size() << ";\n";
-        // std::cout << "vo = ";
-        // std::for_each(vo.cbegin(), vo.cend(), print);
-        // std::cout << std::endl;
+        matrix::matMulNoModulus(vo_p, weights_t, vi);
+        std::cout << "plain output vector vo.size() = " << vo_p.size() << ";\n";
+        std::cout << "vo_p = ";
+        std::for_each(vo_p.cbegin(), vo_p.cend(), print);
+        std::cout << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "--- Symmetrically encrypting input ---" << std::endl;
+        std::vector<uint64_t> client_sym_key = pastahelper::get_symmetric_key();
+        pasta::PASTA SymmetricEncryptor(client_sym_key, config::plain_mod);
+        std::vector<uint64_t> vi_se = pastahelper::symmetric_encrypt_vec(SymmetricEncryptor, vi); // the symmetric encrypted images
+
+        utils::print_line(__LINE__);
+        std::cout << "--- (Check) Decrypting symmetrically encrypted input ---" << std::endl;
+        std::vector<uint64_t> client_sym_key = pastahelper::get_symmetric_key();
+        pasta::PASTA SymmetricEncryptor(client_sym_key, config::plain_mod);
+        std::vector<uint64_t> vi_se = pastahelper::symmetric_encrypt_vec(SymmetricEncryptor, vi); // the symmetric encrypted images
+
+        // std::cout << "--- HE Context ---" << std::endl;
+
+        // std::cout << "--- HHE encrypting key ---" << std::endl;
+
+        // std::cout << "--- HHE decomposition ---" << std::endl;
+
+        // std::cout << "--- HHE decomposed postprocessing ---" << std::endl;
+
+        // std::cout << "--- Computing in HE ---" << std::endl;
+
+        // std::cout << "--- Final decrypt ---" << std::endl;
 
         return 0;
     }

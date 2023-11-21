@@ -5,6 +5,7 @@
 #include <pocketnn/pktnn.h>
 
 #include "utils.h"
+#include "matrix.h"
 #include "../pasta/pasta_3_plain.h"
 #include "../pasta/pasta_3_seal.h"
 
@@ -26,6 +27,10 @@ namespace pastahelper
     */
     std::vector<std::vector<uint64_t>> symmetric_encrypt(const pasta::PASTA &encryptor, const pktnn::pktmat &plaintext);
 
+    /*
+    Helper function: Symmetric encryption of an input vector
+    */
+    std::vector<uint64_t> symmetric_encrypt_vec(const pasta::PASTA &encryptor, const matrix::vector &plaintext);
     /*
     Helper function: Symmetric decryption
     */

@@ -11,6 +11,7 @@ namespace matrix
     using matrix = std::vector<std::vector<int64_t>>;
     using uint128_t = __uint128_t;
 
+    // multiplication between a matrix and a vector (with modulus operation)
     static void matMul(vector &vo, const matrix &M, const vector &vi,
                        size_t modulus)
     {
@@ -26,16 +27,32 @@ namespace matrix
         for (size_t row = 0; row < rows; row++)
         {
             vo[row] = ((vi[0]) * M[row][0]) % modulus;
-            // std::cout << "vi[0] = " << vi[0] << "; ";
-            // std::cout << "M[row][0] = " << M[row][0] << std::endl;
-            // std::cout << "vo[row] = " << vo[row] << std::endl;
             for (size_t col = 1; col < cols; col++)
             {
                 vo[row] += (((vi[col]) * M[row][col]) % modulus);
                 vo[row] %= modulus;
-                std::cout << "row " << row ""
-                // std::cout << "M[row][col] = " << M[row][col] << std::endl;
-                // std::cout << "vi[col] = " << vi[col] << "; ";
+            }
+        }
+    }
+
+    // multiplication between a matrix and a vector (without modulus operation)
+    static void matMulNoModulus(vector &vo, const matrix &M, const vector &vi)
+    {
+        size_t cols = vi.size();
+        size_t rows = M.size();
+
+        std::cout << "\nrows = " << rows << "; ";
+        std::cout << "cols = " << cols << "\n";
+
+        if (vo.size() != rows)
+            vo.resize(rows);
+
+        for (size_t row = 0; row < rows; row++)
+        {
+            vo[row] = ((vi[0]) * M[row][0]);
+            for (size_t col = 1; col < cols; col++)
+            {
+                vo[row] += (((vi[col]) * M[row][col]));
             }
         }
     }

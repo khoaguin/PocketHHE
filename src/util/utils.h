@@ -27,7 +27,7 @@ namespace utils
     Helper function: Print a vector of any type.
     */
     template <typename T>
-    inline void print_vec(std::vector<T> const &input, uint size, std::string name = "", std::string separator = " ")
+    inline void print_vec(std::vector<T> const &input, size_t size, std::string name = "", std::string separator = " ")
     {
         std::cout << name << " = ";
         for (int i = 0; i < size; i++)

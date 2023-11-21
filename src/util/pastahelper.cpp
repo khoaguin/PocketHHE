@@ -305,6 +305,15 @@ namespace pastahelper
         return ciphertexts;
     };
 
+    std::vector<uint64_t> symmetric_encrypt_vec(const pasta::PASTA &encryptor,
+                                                const matrix::vector &plaintext_vec)
+    {
+        std::vector<uint64_t> uint_row = utils::int64_to_uint64(plaintext_vec);
+        std::vector<uint64_t> ciph = encryptor.encrypt(uint_row);
+        utils::print_vec(ciph, ciph.size(), "encrypted_row");
+        return ciph;
+    };
+
     /*
     Helper function: Symmetric decryption
     */
