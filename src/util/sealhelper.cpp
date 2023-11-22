@@ -120,6 +120,16 @@ namespace sealhelper
         return encrypted_weight;
     }
 
+    std::vector<seal::Ciphertext> encrypt_weight(const matrix::matrix &weight,
+                                                 const seal::PublicKey &he_pk,
+                                                 const seal::BatchEncoder &benc,
+                                                 const seal::Encryptor &enc)
+    {
+        std::cout << "encrypting weights matrix::matrix" << std::endl;
+        std::vector<seal::Ciphertext> encrypted_weights;
+        return encrypted_weights;
+    }
+
     /*
     Helper function: Decrypt the encrypted weight into a matrix of plaintexts.
     */

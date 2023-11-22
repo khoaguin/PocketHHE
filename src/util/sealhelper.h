@@ -6,6 +6,7 @@
 #include <seal/seal.h>
 #include <pocketnn/pktnn.h>
 #include "../../configs/config.h"
+#include "matrix.h"
 
 namespace sealhelper
 {
@@ -23,6 +24,11 @@ namespace sealhelper
     Helper function: Encrypts the weight matrix (each row of the matrix into a ciphertext)
     */
     std::vector<seal::Ciphertext> encrypt_weight(pktnn::pktmat &weight,
+                                                 const seal::PublicKey &he_pk,
+                                                 const seal::BatchEncoder &benc,
+                                                 const seal::Encryptor &enc);
+
+    std::vector<seal::Ciphertext> encrypt_weight(matrix::matrix &weight,
                                                  const seal::PublicKey &he_pk,
                                                  const seal::BatchEncoder &benc,
                                                  const seal::Encryptor &enc);

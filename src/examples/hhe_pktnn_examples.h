@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <cassert>
 
 #include <pocketnn/pktnn.h>
 #include <seal/seal.h>

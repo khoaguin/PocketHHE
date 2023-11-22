@@ -37,6 +37,11 @@ namespace pastahelper
     std::vector<std::vector<uint64_t>> symmetric_decrypt(const pasta::PASTA &encryptor, const std::vector<std::vector<uint64_t>> &ciphertext);
 
     /*
+    Helper function: Symmetric decryption of a vector
+    */
+    std::vector<uint64_t> symmetric_decrypt_vec(const pasta::PASTA &encryptor,
+                                                const std::vector<uint64_t> &ciph_vec);
+    /*
     Helper function: Encrypt the symmetric key using HE
     This function is adapted from https://github.com/IAIK/hybrid-HE-framework/blob/master/ciphers/pasta_3/seal/pasta_3_seal.cpp
     */

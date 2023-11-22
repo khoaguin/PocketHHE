@@ -40,10 +40,6 @@ namespace matrix
     {
         size_t cols = vi.size();
         size_t rows = M.size();
-
-        std::cout << "\nrows = " << rows << "; ";
-        std::cout << "cols = " << cols << "\n";
-
         if (vo.size() != rows)
             vo.resize(rows);
 

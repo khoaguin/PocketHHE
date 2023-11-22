@@ -893,18 +893,25 @@ namespace hhe_pktnn_examples
         matrix::print_matrix(weights_t);
 
         // bias (all 0s)
-        std::cout << "Bias = ";
-        matrix::vector bias;
-        bias.reserve(1);
-        bias.push_back(0);
-        std::cout << "bias shape = " << bias.size() << std::endl;
-        std::for_each(bias.cbegin(), bias.cend(), print);
+        std::cout << "Ignoring Bias" << std::endl;
+        // matrix::vector bias;
+        // bias.reserve(1);
+        // bias.push_back(0);
+        // std::cout << "bias shape = " << bias.size() << std::endl;
+        // std::for_each(bias.cbegin(), bias.cend(), print);
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst encrypts the weights using HE" << std::endl;
+        std::vector<seal::Ciphertext> enc_weights_t = sealhelper::encrypt_weight(weights_t,
+                                                                                 analyst.he_pk,
+                                                                                 analyst_he_benc,
+                                                                                 analyst_he_enc);
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
         std::cout << "---------------------- Client (Data Owner) ----------------------"
-                  << "\n";
+                  << std::endl;
         client_start_0 = std::chrono::high_resolution_clock::now(); // Start the timer
         utils::print_line(__LINE__);
         std::cout << "Client loads his input data from " << config::dataset_input_path << std::endl;
@@ -913,40 +920,115 @@ namespace hhe_pktnn_examples
         matrix::print_matrix_shape(data);
         matrix::print_matrix_stats(data);
 
-        std::cout << "\n--- (Check) Computing in plain on 1 input vectors ---" << std::endl;
+        std::cout << "--- (Check) Computing in plain on 1 input vectors ---" << std::endl;
         matrix::vector vo_p(1);
         matrix::vector vi = data[1];
         std::cout << "input vector vi.size() = " << vi.size() << ";\n";
-        std::for_each(vi.cbegin(), vi.cend(), print);
+        utils::print_vec(vi, vi.size(), "vi");
         matrix::matMulNoModulus(vo_p, weights_t, vi);
         std::cout << "plain output vector vo.size() = " << vo_p.size() << ";\n";
-        std::cout << "vo_p = ";
-        std::for_each(vo_p.cbegin(), vo_p.cend(), print);
-        std::cout << std::endl;
+        utils::print_vec(vo_p, vo_p.size(), "vo_p");
 
         utils::print_line(__LINE__);
         std::cout << "--- Symmetrically encrypting input ---" << std::endl;
         std::vector<uint64_t> client_sym_key = pastahelper::get_symmetric_key();
         pasta::PASTA SymmetricEncryptor(client_sym_key, config::plain_mod);
         std::vector<uint64_t> vi_se = pastahelper::symmetric_encrypt_vec(SymmetricEncryptor, vi); // the symmetric encrypted images
+        utils::print_vec(vi_se, vi_se.size(), "vi_se = ");
+
+        utils::print_line(__LINE__);
+        std::cout << "--- HHE encrypting key ---" << std::endl;
+        std::vector<seal::Ciphertext> client_hhe_key = pastahelper::encrypt_symmetric_key(
+            client_sym_key, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
 
         utils::print_line(__LINE__);
         std::cout << "--- (Check) Decrypting symmetrically encrypted input ---" << std::endl;
-        std::vector<uint64_t> client_sym_key = pastahelper::get_symmetric_key();
-        pasta::PASTA SymmetricEncryptor(client_sym_key, config::plain_mod);
-        std::vector<uint64_t> vi_se = pastahelper::symmetric_encrypt_vec(SymmetricEncryptor, vi); // the symmetric encrypted images
+        std::vector<uint64_t> vi_dec = pastahelper::symmetric_decrypt_vec(SymmetricEncryptor, vi_se); // the symmetric encrypted images
+        utils::print_vec(vi_dec, vi_dec.size(), "vi_dec");
 
-        // std::cout << "--- HE Context ---" << std::endl;
-
-        // std::cout << "--- HHE encrypting key ---" << std::endl;
-
-        // std::cout << "--- HHE decomposition ---" << std::endl;
+        // std::cout << "--- HHE decomposition ---\n" << std::flush;
+        // time_start = std::chrono::high_resolution_clock::now();
+        // std::vector<seal::Ciphertext> vi_e_vec = cipher.HE_decrypt(ciph,
+        // USE_BATCH); time_end = std::chrono::high_resolution_clock::now();
+        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        //     time_end - time_start);
+        // std::cout << "...done" << std::endl;
+        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
+        // std::endl; std::cout << "noise:" << std::endl;
+        // cipher.print_noise(vi_e_vec);
+        // std::cout << "vi_e_vec.size() = " << vi_e_vec.size() << std::endl;
 
         // std::cout << "--- HHE decomposed postprocessing ---" << std::endl;
+        // seal::Ciphertext vi_e;
+        // time_start = std::chrono::high_resolution_clock::now();
+        // if (rem != 0) {
+        //   std::vector<uint64_t> mask(rem, 1);
+        //   cipher.mask(vi_e_vec.back(), mask);
+        // }
+        // cipher.flatten(vi_e_vec, vi_e);
+        // time_end = std::chrono::high_resolution_clock::now();
+        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        //     time_end - time_start);
+        // std::cout << "...done" << std::endl;
+        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
+        // std::endl; std::cout << "noise:" << std::endl; cipher.print_noise(vi_e);
 
+        // std::cout << "--- (Check) HE decrypt of decomposed input vector ---"
+        //           << std::flush;
+        // time_start = std::chrono::high_resolution_clock::now();
+        // std::vector<seal::Ciphertext> vi_e_vec_processed(1);
+        // vi_e_vec_processed.push_back(vi_e);
+        // // std::vector<std::vector<uint64_t>> vi_dec(vi_e_vec.size());
+        // std::vector<uint64_t> plain =
+        //     cipher.decrypt_result(vi_e_vec_processed, USE_BATCH);
+        // time_end = std::chrono::high_resolution_clock::now();
+        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        //     time_end - time_start);
+        // std::cout << "... done" << std::endl;
+        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
+        // std::endl; std::for_each(plain.cbegin(), plain.cend(), print);
+
+        // seal::Ciphertext vo_e;
         // std::cout << "--- Computing in HE ---" << std::endl;
+        // time_start = std::chrono::high_resolution_clock::now();
+        // std::cout << "Setting bsgs parameters: "
+        //           << "bsgs_n1 = " << bsgs_n1 << ", bsgs_n2 = " << bsgs_n2
+        //           << std::endl;
+        // if (use_bsgs) cipher.set_bsgs_params(bsgs_n1, bsgs_n2);
+        // for (size_t r = 0; r < num_matmuls_square; r++) {
+        //   cipher.packed_affine(vo_e, m[r], vi_e, b[r]);
+        //   // if (!LAST_SQUARE && r != NUM_MATMULS_SQUARES - 1)
+        //   //   cipher.packed_square(vi_e, vo_e);
+        // }
+        // time_end = std::chrono::high_resolution_clock::now();
+        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        //     time_end - time_start);
+        // std::cout << "...done" << std::endl;
+        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
+        // std::endl;
 
-        // std::cout << "--- Final decrypt ---" << std::endl;
+        // std::cout << "Final noise:" << std::endl;
+        // cipher.print_noise(vo_e);
+
+        // auto size = cipher.get_cipher_size(vo_e, MOD_SWITCH, MOD_SWITCH_LEVELS);
+        // std::cout << "Final ciphertext size = " << size << " Bytes" << std::endl;
+
+        // std::cout << "Final decrypt..." << std::flush;
+        // time_start = std::chrono::high_resolution_clock::now();
+        // cipher.packed_decrypt(vo_e, vo_p, N);
+        // time_end = std::chrono::high_resolution_clock::now();
+        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        //     time_end - time_start);
+        // std::cout << "... done" << std::endl;
+        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
+        // std::endl;
+
+        // if (vo != vo_p) {
+        //   std::cerr << cipher.get_cipher_name() << " KATS failed!\n";
+        //   utils::print_vector("plain:  ", vo, std::cerr);
+        //   utils::print_vector("cipher: ", vo_p, std::cerr);
+        //   return false;
+        // }
 
         return 0;
     }
