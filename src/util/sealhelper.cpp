@@ -120,15 +120,50 @@ namespace sealhelper
         return encrypted_weight;
     }
 
-    std::vector<seal::Ciphertext> encrypt_weight(const matrix::matrix &weight,
-                                                 const seal::PublicKey &he_pk,
-                                                 const seal::BatchEncoder &benc,
-                                                 const seal::Encryptor &enc)
+    std::vector<seal::Ciphertext> encrypt_weight_mat(const matrix::matrix &weight,
+                                                     const seal::PublicKey &he_pk,
+                                                     const seal::BatchEncoder &benc,
+                                                     const seal::Encryptor &enc)
     {
-        std::cout << "encrypting weights matrix::matrix" << std::endl;
+        size_t rows = weight.size();
         std::vector<seal::Ciphertext> encrypted_weights;
+        // encrypt the rows in the weight matrix
+        for (size_t r = 0; r < rows; r++)
+        {
+            std::vector<int64_t> row = weight[r];
+            seal::Plaintext plain_input;
+            benc.encode(row, plain_input);
+            seal::Ciphertext encrypted_row;
+            enc.encrypt(plain_input, encrypted_row);
+            encrypted_weights.push_back(encrypted_row);
+        }
+
         return encrypted_weights;
     }
+
+    matrix::matrix decrypt_weight_mat(const std::vector<seal::Ciphertext> &enc_weight,
+                                      const seal::BatchEncoder &benc,
+                                      seal::Decryptor &dec,
+                                      const int vec_size)
+    {
+        size_t num_rows = enc_weight.size();
+        matrix::matrix decrypted_weights(num_rows);
+        // decrypt each row in the vector of ciphertexts
+        for (auto r = 0; r < num_rows; ++r)
+        {
+            decrypted_weights[r].reserve(vec_size);
+            std::vector<int64_t> plain;
+            seal::Ciphertext encrypted_row = enc_weight[r];
+            seal::Plaintext plain_result;
+            dec.decrypt(encrypted_row, plain_result);
+            benc.decode(plain_result, plain);
+            for (int c = 0; c < vec_size; ++c)
+            {
+                decrypted_weights[r].push_back(plain[c]);
+            }
+        }
+        return decrypted_weights;
+    };
 
     /*
     Helper function: Decrypt the encrypted weight into a matrix of plaintexts.

@@ -28,10 +28,10 @@ namespace sealhelper
                                                  const seal::BatchEncoder &benc,
                                                  const seal::Encryptor &enc);
 
-    std::vector<seal::Ciphertext> encrypt_weight(matrix::matrix &weight,
-                                                 const seal::PublicKey &he_pk,
-                                                 const seal::BatchEncoder &benc,
-                                                 const seal::Encryptor &enc);
+    std::vector<seal::Ciphertext> encrypt_weight_mat(const matrix::matrix &weight,
+                                                     const seal::PublicKey &he_pk,
+                                                     const seal::BatchEncoder &benc,
+                                                     const seal::Encryptor &enc);
     /*
     Helper function: Decrypt the encrypted weight.
     */
@@ -40,6 +40,11 @@ namespace sealhelper
                                  const seal::BatchEncoder &benc,
                                  seal::Decryptor &dec,
                                  int vec_size = 784);
+
+    matrix::matrix decrypt_weight_mat(const std::vector<seal::Ciphertext> &enc_weight,
+                                      const seal::BatchEncoder &benc,
+                                      seal::Decryptor &dec,
+                                      const int vec_size);
 
     /*
     Helper function: Encrypt each number in the bias vector into a ciphertext (no batch encoder needed).

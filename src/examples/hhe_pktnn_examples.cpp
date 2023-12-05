@@ -887,25 +887,28 @@ namespace hhe_pktnn_examples
         matrix::print_matrix_shape(weights);
         matrix::print_matrix_stats(weights);
         // matrix::print_matrix(weights);
-        std::cout << "Transposed weights: " << std::endl;
+        std::cout << "Transposed weights: ";
         matrix::matrix weights_t = matrix::transpose(weights);
         matrix::print_matrix_shape(weights_t);
         matrix::print_matrix(weights_t);
 
         // bias (all 0s)
         std::cout << "Ignoring Bias" << std::endl;
-        // matrix::vector bias;
-        // bias.reserve(1);
-        // bias.push_back(0);
-        // std::cout << "bias shape = " << bias.size() << std::endl;
-        // std::for_each(bias.cbegin(), bias.cend(), print);
 
         utils::print_line(__LINE__);
         std::cout << "Analyst encrypts the weights using HE" << std::endl;
-        std::vector<seal::Ciphertext> enc_weights_t = sealhelper::encrypt_weight(weights_t,
-                                                                                 analyst.he_pk,
-                                                                                 analyst_he_benc,
-                                                                                 analyst_he_enc);
+        std::vector<seal::Ciphertext> enc_weights_t = sealhelper::encrypt_weight_mat(weights_t,
+                                                                                     analyst.he_pk,
+                                                                                     analyst_he_benc,
+                                                                                     analyst_he_enc);
+        std::cout << "(Check) Analyst decrypts the encrypted weight" << std::endl;
+        matrix::matrix dec_weights_t = sealhelper::decrypt_weight_mat(enc_weights_t,
+                                                                      analyst_he_benc,
+                                                                      analyst_he_dec,
+                                                                      300);
+        std::cout << "Decrypted Weights: ";
+        matrix::print_matrix_shape(dec_weights_t);
+        matrix::print_matrix(dec_weights_t);
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
