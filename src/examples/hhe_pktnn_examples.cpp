@@ -830,6 +830,15 @@ namespace hhe_pktnn_examples
         {
             throw std::runtime_error("Dataset must be either SpO2 or MNIST");
         }
+        int inputLen = 0;
+        if (lowerStr == "spo2")
+        {
+            inputLen = 300;
+        }
+        if (lowerStr == "mnist")
+        {
+            inputLen = 784;
+        }
 
         // the actors in the protocol
         Analyst analyst;
@@ -837,6 +846,9 @@ namespace hhe_pktnn_examples
         CSP csp;
 
         // calculate the time (computation cost)
+        std::chrono::high_resolution_clock::time_point time_start, time_end;
+        std::chrono::milliseconds time_diff;
+
         std::chrono::high_resolution_clock::time_point analyst_start_0, analyst_end_0, analyst_start_1, analyst_end_1;
         std::chrono::high_resolution_clock::time_point client_start_0, client_end_0;
         std::chrono::high_resolution_clock::time_point csp_start_0, csp_end_0;
@@ -901,11 +913,12 @@ namespace hhe_pktnn_examples
                                                                                      analyst.he_pk,
                                                                                      analyst_he_benc,
                                                                                      analyst_he_enc);
+        utils::print_line(__LINE__);
         std::cout << "(Check) Analyst decrypts the encrypted weight" << std::endl;
         matrix::matrix dec_weights_t = sealhelper::decrypt_weight_mat(enc_weights_t,
                                                                       analyst_he_benc,
                                                                       analyst_he_dec,
-                                                                      300);
+                                                                      inputLen);
         std::cout << "Decrypted Weights: ";
         matrix::print_matrix_shape(dec_weights_t);
         matrix::print_matrix(dec_weights_t);
@@ -923,7 +936,8 @@ namespace hhe_pktnn_examples
         matrix::print_matrix_shape(data);
         matrix::print_matrix_stats(data);
 
-        std::cout << "--- (Check) Computing in plain on 1 input vectors ---" << std::endl;
+        utils::print_line(__LINE__);
+        std::cout << "(Check) Computing in plain on only 1 input vectors" << std::endl;
         matrix::vector vo_p(1);
         matrix::vector vi = data[1];
         std::cout << "input vector vi.size() = " << vi.size() << ";\n";
@@ -933,51 +947,87 @@ namespace hhe_pktnn_examples
         utils::print_vec(vo_p, vo_p.size(), "vo_p");
 
         utils::print_line(__LINE__);
-        std::cout << "--- Symmetrically encrypting input ---" << std::endl;
+        std::cout << "Client symmetrically encrypts input" << std::endl;
         std::vector<uint64_t> client_sym_key = pastahelper::get_symmetric_key();
         pasta::PASTA SymmetricEncryptor(client_sym_key, config::plain_mod);
         std::vector<uint64_t> vi_se = pastahelper::symmetric_encrypt_vec(SymmetricEncryptor, vi); // the symmetric encrypted images
-        utils::print_vec(vi_se, vi_se.size(), "vi_se = ");
+        utils::print_vec(vi_se, vi_se.size(), "vi_se");
 
-        utils::print_line(__LINE__);
-        std::cout << "--- HHE encrypting key ---" << std::endl;
-        std::vector<seal::Ciphertext> client_hhe_key = pastahelper::encrypt_symmetric_key(
-            client_sym_key, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
-
-        utils::print_line(__LINE__);
-        std::cout << "--- (Check) Decrypting symmetrically encrypted input ---" << std::endl;
+        std::cout << "(Check) Client decrypts symmetrically encrypted input" << std::endl;
         std::vector<uint64_t> vi_dec = pastahelper::symmetric_decrypt_vec(SymmetricEncryptor, vi_se); // the symmetric encrypted images
         utils::print_vec(vi_dec, vi_dec.size(), "vi_dec");
 
-        // std::cout << "--- HHE decomposition ---\n" << std::flush;
-        // time_start = std::chrono::high_resolution_clock::now();
-        // std::vector<seal::Ciphertext> vi_e_vec = cipher.HE_decrypt(ciph,
-        // USE_BATCH); time_end = std::chrono::high_resolution_clock::now();
-        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        //     time_end - time_start);
-        // std::cout << "...done" << std::endl;
-        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
-        // std::endl; std::cout << "noise:" << std::endl;
-        // cipher.print_noise(vi_e_vec);
-        // std::cout << "vi_e_vec.size() = " << vi_e_vec.size() << std::endl;
+        utils::print_line(__LINE__);
+        std::cout << "Client encrypts the symmetric key using HE -> HHE key" << std::endl;
+        std::vector<seal::Ciphertext> client_hhe_key = pastahelper::encrypt_symmetric_key(
+            client_sym_key, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
 
-        // std::cout << "--- HHE decomposed postprocessing ---" << std::endl;
-        // seal::Ciphertext vi_e;
-        // time_start = std::chrono::high_resolution_clock::now();
-        // if (rem != 0) {
-        //   std::vector<uint64_t> mask(rem, 1);
-        //   cipher.mask(vi_e_vec.back(), mask);
-        // }
-        // cipher.flatten(vi_e_vec, vi_e);
-        // time_end = std::chrono::high_resolution_clock::now();
-        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        //     time_end - time_start);
-        // std::cout << "...done" << std::endl;
-        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
-        // std::endl; std::cout << "noise:" << std::endl; cipher.print_noise(vi_e);
+        // -------------------------- CSP ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "-------------------------- CSP ----------------------" << std::endl;
 
-        // std::cout << "--- (Check) HE decrypt of decomposed input vector ---"
-        //           << std::flush;
+        utils::print_line(__LINE__);
+        std::cout << "CSP does HHE decomposition to turn client's symmetric input into HE input\n";
+        seal::KeyGenerator csp_keygen(*context); // CSP creates a new sk key for himself
+        csp.he_sk = csp_keygen.secret_key();
+        pasta::PASTA_SEAL HHE(context, analyst.he_pk, csp.he_sk, analyst.he_rk, analyst.he_gk);
+        time_start = std::chrono::high_resolution_clock::now();
+        std::vector<seal::Ciphertext> vi_he = HHE.decomposition(vi_se, client_hhe_key, config::USE_BATCH);
+        time_end = std::chrono::high_resolution_clock::now();
+        time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+            time_end - time_start);
+        std::cout << "Time: " << time_diff.count() << " milliseconds"
+                  << " = " << time_diff.count() / 1000 << " seconds" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP does HHE decomposed postprocessing" << std::endl;
+        size_t num_block = inputLen / HHE.get_plain_size();
+        size_t rem = inputLen % HHE.get_plain_size();
+        if (rem)
+        {
+            num_block++;
+        }
+        std::cout << "There are " << vi_he.size() << " decomposed HE ciphertexts\n";
+        std::cout << "HHE cipher one block's plain size " << HHE.get_plain_size() << std::endl;
+        std::cout << "num_block = " << num_block << std::endl;
+        std::cout << "rem = " << rem << std::endl;
+        std::cout << "Preparing necessary things to do postprocessing (creating new Galois key, masking, flattening)" << std::endl;
+        std::vector<int> flatten_gks;
+        for (int i = 1; i < num_block; i++)
+        {
+            flatten_gks.push_back(-(int)(i * HHE.get_plain_size()));
+        }
+        std::vector<int> csp_gk_indices = pastahelper::add_some_gk_indices(gk_indices, flatten_gks);
+        seal::GaloisKeys csp_gk;
+        keygen.create_galois_keys(csp_gk_indices, csp_gk);
+        time_start = std::chrono::high_resolution_clock::now();
+        if (rem != 0)
+        {
+            std::vector<uint64_t> mask(rem, 1);
+            HHE.mask(vi_he.back(), mask);
+        }
+        seal::Ciphertext vi_he_processed;
+        HHE.flatten(vi_he, vi_he_processed, csp_gk);
+        time_end = std::chrono::high_resolution_clock::now();
+        time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+            time_end - time_start);
+        std::cout << "Time: " << time_diff.count() << " milliseconds"
+                  << " = " << time_diff.count() / 1000 << " seconds" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "(Check) Decrypts processed, decomposed HE input vector using Analyst's HE secret key\n";
+        std::vector<int64_t> vi_he_decrypted_processed = sealhelper::decrypting(vi_he_processed,
+                                                                                analyst.he_sk,
+                                                                                analyst_he_benc,
+                                                                                *context,
+                                                                                inputLen);
+        utils::print_vec(vi_he_decrypted_processed, vi_he_decrypted_processed.size(), "vi_he_decrypted_processed");
+        if (vi_he_decrypted_processed.size() != vi.size())
+        {
+            throw std::logic_error("The decrypted HE input vector after decomposition has different length than the plaintext version!");
+        }
+
         // time_start = std::chrono::high_resolution_clock::now();
         // std::vector<seal::Ciphertext> vi_e_vec_processed(1);
         // vi_e_vec_processed.push_back(vi_e);

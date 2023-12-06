@@ -5,6 +5,7 @@ namespace pastahelper
 
     /*
     Helper function: create galois keys indices to create HE galois keys
+    Modified from https://github.com/IAIK/hybrid-HE-framework/blob/master/ciphers/pasta_3/seal/pasta_3_seal.cpp
     */
     std::vector<int> add_gk_indices(bool use_bsgs, const seal::BatchEncoder &benc)
     {
@@ -20,6 +21,15 @@ namespace pastahelper
         {
             for (uint64_t k = 1; k < BSGS_N2; k++)
                 gk_indices.push_back(-k * BSGS_N1);
+        }
+        return gk_indices;
+    }
+
+    std::vector<int> add_some_gk_indices(std::vector<int> gk_indices, std::vector<int> &gk_ind)
+    {
+        for (auto &it : gk_ind)
+        {
+            gk_indices.push_back(it);
         }
         return gk_indices;
     }

@@ -42,7 +42,7 @@ Before compiling the application, you can take a look at `src/config.cpp` and ch
 - When `dry_run` is `true`, we only run a few data examples set by `dry_run_num_samples`. Otherwise it runs the whole dataset.
 - `save_weight_path` and `save_bias_path` defines the paths that the trained weights and bias will be saved. It also defines the paths that the trained weights and bias will be loaded from in the inference protocols.
 
-To compile and run, do the following:
+To compile and run, run `bash start.sh`, which essentially does the following:
 
 - Run `cmake -S . -B build -DCMAKE_PREFIX_PATH=libs/seal`.
   Here, `-DCMAKE_PREFIX_PATH` specifies the path to the installed SEAL library.
