@@ -981,7 +981,7 @@ namespace hhe_pktnn_examples
                   << " = " << time_diff.count() / 1000 << " seconds" << std::endl;
 
         utils::print_line(__LINE__);
-        std::cout << "CSP does HHE decomposed postprocessing" << std::endl;
+        std::cout << "CSP does HHE decomposition postprocessing on the HE encrypted input" << std::endl;
         size_t num_block = inputLen / HHE.get_plain_size();
         size_t rem = inputLen % HHE.get_plain_size();
         if (rem)
@@ -1027,19 +1027,6 @@ namespace hhe_pktnn_examples
         {
             throw std::logic_error("The decrypted HE input vector after decomposition has different length than the plaintext version!");
         }
-
-        // time_start = std::chrono::high_resolution_clock::now();
-        // std::vector<seal::Ciphertext> vi_e_vec_processed(1);
-        // vi_e_vec_processed.push_back(vi_e);
-        // // std::vector<std::vector<uint64_t>> vi_dec(vi_e_vec.size());
-        // std::vector<uint64_t> plain =
-        //     cipher.decrypt_result(vi_e_vec_processed, USE_BATCH);
-        // time_end = std::chrono::high_resolution_clock::now();
-        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        //     time_end - time_start);
-        // std::cout << "... done" << std::endl;
-        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
-        // std::endl; std::for_each(plain.cbegin(), plain.cend(), print);
 
         // seal::Ciphertext vo_e;
         // std::cout << "--- Computing in HE ---" << std::endl;
