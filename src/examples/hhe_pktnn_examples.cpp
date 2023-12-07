@@ -1038,7 +1038,7 @@ namespace hhe_pktnn_examples
         // TODO: Do encrypted sum here
         seal::Ciphertext enc_result_2;
 
-        std::cout << "---------------------- Analyst ----------------------"
+        std::cout << "\n---------------------- Analyst ----------------------"
                   << "\n";
         utils::print_line(__LINE__);
         std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
@@ -1049,6 +1049,24 @@ namespace hhe_pktnn_examples
                                                                        inputLen);
         utils::print_vec(decrypted_result, decrypted_result.size(), "decrypted_result");
 
+        // sum
+        matrix::vector vo(1);
+        for (auto n : decrypted_result)
+        {
+            vo[0] += n;
+        }
+        // final sigmoid
+        utils::print_vec(vo, vo.size(), "vo");
+
+        if (vo != vo_p)
+        {
+            utils::print_line(__LINE__);
+            std::cout << "\n!!!HHE Protocol Failed!!!\n";
+            utils::print_vec(vo_p, vo_p.size(), "plain result");
+            utils::print_vec(vo, vo.size(), "hhe result");
+        }
+        std::cout << "\n---------------------- Done ----------------------"
+                  << "\n";
         return 0;
     }
 
