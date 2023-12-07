@@ -359,6 +359,61 @@ namespace sealhelper
             std::cout << "The size of " << name << " is " << total_size * 1e-6 << " Mb" << std::endl;
         }
         return (float)total_size * 1e-6;
-    }
+    };
+
+    /*
+    Calculate the encrypted sum of the encrypted ciphertext
+    Sum the elements of the resulting vector: This involves using the Evaluator to
+    rotate and sum the elements in the encrypted state.
+    */
+    void encrypted_sum(const seal::Ciphertext &encrypted,
+                       seal::Ciphertext &destination,
+                       const seal::Evaluator &evaluator,
+                       const seal::BatchEncoder &encoder,
+                       const seal::Encryptor &encryptor,
+                       seal::Decryptor &decryptor,
+                       const seal::RelinKeys &relin_key,
+                       const seal::GaloisKeys &gal_keys,
+                       const size_t slot_count)
+    {
+        std::cout << "doing encrypted sum" << std::endl;
+        // Example vectors
+        std::vector<int64_t> vec1 = {1, 2, 3};
+        std::vector<int64_t> vec2 = {4, 5, 6};
+        vec1.resize(slot_count, 0);
+        vec2.resize(slot_count, 0);
+        // Encode and encrypt the vectors
+        seal::Plaintext plain_vec1;
+        seal::Plaintext plain_vec2;
+        encoder.encode(vec1, plain_vec1);
+        encoder.encode(vec2, plain_vec2);
+        seal::Ciphertext encrypted_vec1;
+        seal::Ciphertext encrypted_vec2;
+        encryptor.encrypt(plain_vec1, encrypted_vec1);
+        encryptor.encrypt(plain_vec2, encrypted_vec2);
+
+        // Multiply the encrypted vectors
+        seal::Ciphertext encrypted_product;
+        evaluator.multiply(encrypted_vec1, encrypted_vec2, encrypted_product);
+        evaluator.relinearize_inplace(encrypted_product, relin_key);
+
+        // Sum the elements of the resulting vector
+        seal::Ciphertext sum_cipher = encrypted_product;
+        for (int i = slot_count / 2; i >= 1; i >>= 1)
+        {
+            seal::Ciphertext rotated;
+            evaluator.rotate_rows(sum_cipher, i, gal_keys, rotated);
+            evaluator.add_inplace(sum_cipher, rotated);
+        }
+
+        // Decrypt and decode the result
+        seal::Plaintext plain_sum;
+        decryptor.decrypt(sum_cipher, plain_sum);
+        std::vector<int64_t> decoded_sum;
+        encoder.decode(plain_sum, decoded_sum);
+
+        // Output the sum of the product of the vectors
+        std::cout << "Sum of the product of the vectors: " << decoded_sum[0] << std::endl;
+    };
 
 } // end of sealhelper namespace

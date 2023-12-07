@@ -882,6 +882,8 @@ namespace hhe_pktnn_examples
         seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
         seal::Evaluator analyst_he_eval(*context);
         seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
+        size_t slot_count = analyst_he_benc.slot_count();
+        std::cout << "Batch encoder slot count = " << slot_count << std::endl;
 
         utils::print_line(__LINE__);
         std::cout << "Analyst loads the pretrained weights"
@@ -1017,58 +1019,35 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "(Check) Decrypts processed, decomposed HE input vector using Analyst's HE secret key\n";
-        std::vector<int64_t> vi_he_decrypted_processed = sealhelper::decrypting(vi_he_processed,
+        std::vector<int64_t> vi_he_processed_decrypted = sealhelper::decrypting(vi_he_processed,
                                                                                 analyst.he_sk,
                                                                                 analyst_he_benc,
                                                                                 *context,
                                                                                 inputLen);
-        utils::print_vec(vi_he_decrypted_processed, vi_he_decrypted_processed.size(), "vi_he_decrypted_processed");
-        if (vi_he_decrypted_processed.size() != vi.size())
+        utils::print_vec(vi_he_processed_decrypted, vi_he_processed_decrypted.size(), "vi_he_decrypted_processed");
+        if (vi_he_processed_decrypted.size() != vi.size())
         {
             throw std::logic_error("The decrypted HE input vector after decomposition has different length than the plaintext version!");
         }
 
-        // seal::Ciphertext vo_e;
-        // std::cout << "--- Computing in HE ---" << std::endl;
-        // time_start = std::chrono::high_resolution_clock::now();
-        // std::cout << "Setting bsgs parameters: "
-        //           << "bsgs_n1 = " << bsgs_n1 << ", bsgs_n2 = " << bsgs_n2
-        //           << std::endl;
-        // if (use_bsgs) cipher.set_bsgs_params(bsgs_n1, bsgs_n2);
-        // for (size_t r = 0; r < num_matmuls_square; r++) {
-        //   cipher.packed_affine(vo_e, m[r], vi_e, b[r]);
-        //   // if (!LAST_SQUARE && r != NUM_MATMULS_SQUARES - 1)
-        //   //   cipher.packed_square(vi_e, vo_e);
-        // }
-        // time_end = std::chrono::high_resolution_clock::now();
-        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        //     time_end - time_start);
-        // std::cout << "...done" << std::endl;
-        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
-        // std::endl;
+        utils::print_line(__LINE__);
+        std::cout << "CSP evaluates the HE weights on the decomposed HE data" << std::endl;
+        seal::Ciphertext enc_result;
+        sealhelper::packed_enc_multiply(vi_he_processed, enc_weights_t[0],
+                                        enc_result, analyst_he_eval);
+        // TODO: Do encrypted sum here
+        seal::Ciphertext enc_result_2;
 
-        // std::cout << "Final noise:" << std::endl;
-        // cipher.print_noise(vo_e);
-
-        // auto size = cipher.get_cipher_size(vo_e, MOD_SWITCH, MOD_SWITCH_LEVELS);
-        // std::cout << "Final ciphertext size = " << size << " Bytes" << std::endl;
-
-        // std::cout << "Final decrypt..." << std::flush;
-        // time_start = std::chrono::high_resolution_clock::now();
-        // cipher.packed_decrypt(vo_e, vo_p, N);
-        // time_end = std::chrono::high_resolution_clock::now();
-        // time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        //     time_end - time_start);
-        // std::cout << "... done" << std::endl;
-        // std::cout << "Time: " << time_diff.count() << " milliseconds" <<
-        // std::endl;
-
-        // if (vo != vo_p) {
-        //   std::cerr << cipher.get_cipher_name() << " KATS failed!\n";
-        //   utils::print_vector("plain:  ", vo, std::cerr);
-        //   utils::print_vector("cipher: ", vo_p, std::cerr);
-        //   return false;
-        // }
+        std::cout << "---------------------- Analyst ----------------------"
+                  << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
+        std::vector<int64_t> decrypted_result = sealhelper::decrypting(enc_result,
+                                                                       analyst.he_sk,
+                                                                       analyst_he_benc,
+                                                                       *context,
+                                                                       inputLen);
+        utils::print_vec(decrypted_result, decrypted_result.size(), "decrypted_result");
 
         return 0;
     }

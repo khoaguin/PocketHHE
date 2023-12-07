@@ -108,4 +108,18 @@ namespace sealhelper
     float he_vec_size(const std::vector<seal::Ciphertext> &enc_sym_key,
                       bool verbose = false,
                       std::string name = "HE vector");
+
+    /*
+    Calculate the encrypted sum of the encrypted ciphertext
+    */
+    void encrypted_sum(const seal::Ciphertext &encrypted,
+                       seal::Ciphertext &destination,
+                       const seal::Evaluator &evaluator,
+                       const seal::BatchEncoder &encoder,
+                       const seal::Encryptor &encryptor,
+                       seal::Decryptor &decryptor,
+                       const seal::RelinKeys &relin_key,
+                       const seal::GaloisKeys &gal_keys,
+                       const size_t slot_count);
+
 } // end of sealhelper namespace
