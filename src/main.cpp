@@ -10,251 +10,248 @@ using namespace seal;
 
 int encrypted_sum()
 {
-    // Set up SEAL with batching enabled
-    seal::EncryptionParameters parms(seal::scheme_type::bfv);
-    // size_t poly_modulus_degree = config::mod_degree;
-    size_t poly_modulus_degree = 8192;
-    parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-    parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, 20));
-    seal::SEALContext context(parms);
-    sealhelper::print_parameters(context);
+     // Set up SEAL with batching enabled
+     seal::EncryptionParameters parms(seal::scheme_type::bfv);
+     // size_t poly_modulus_degree = config::mod_degree;
+     size_t poly_modulus_degree = 8192;
+     parms.set_poly_modulus_degree(poly_modulus_degree);
+     parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
+     parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, 20));
+     seal::SEALContext context(parms);
+     sealhelper::print_parameters(context);
 
-    // Key generation
-    seal::PublicKey public_key;
-    seal::GaloisKeys gal_keys;
-    seal::KeyGenerator keygen(context);
-    seal::RelinKeys relin_keys;
-    keygen.create_public_key(public_key);
-    keygen.create_galois_keys(gal_keys);
-    keygen.create_relin_keys(relin_keys);
-    seal::SecretKey secret_key = keygen.secret_key();
+     // Key generation
+     seal::PublicKey public_key;
+     seal::GaloisKeys gal_keys;
+     seal::KeyGenerator keygen(context);
+     seal::RelinKeys relin_keys;
+     keygen.create_public_key(public_key);
+     keygen.create_galois_keys(gal_keys);
+     keygen.create_relin_keys(relin_keys);
+     seal::SecretKey secret_key = keygen.secret_key();
 
-    // Encryptor, decryptor, evaluator, and batch encoder
-    seal::Encryptor encryptor(context, public_key);
-    seal::Decryptor decryptor(context, secret_key);
-    seal::Evaluator evaluator(context);
-    seal::BatchEncoder encoder(context);
+     // Encryptor, decryptor, evaluator, and batch encoder
+     seal::Encryptor encryptor(context, public_key);
+     seal::Decryptor decryptor(context, secret_key);
+     seal::Evaluator evaluator(context);
+     seal::BatchEncoder encoder(context);
 
-    // Example vectors
-    vector<int64_t> vec1 = {1, 2, 3};
-    vector<int64_t> vec2 = {4, 5, 6};
+     // Example vectors
+     vector<int64_t> vec1 = {1, -2, 3, 4, 5, 6};
+     vector<int64_t> vec2 = {4, 5, 6, 7, 8, -9};
 
-    // Resize vectors to match the batch size
-    // Essentially, we pad them with zeros
-    size_t slot_count = encoder.slot_count();
-    std::cout << "slot_count = " << slot_count << std::endl;
-    vec1.resize(slot_count, 0);
-    vec2.resize(slot_count, 0);
-    // utils::print_vec(vec1, vec1.size(), "vec1");
+     // Plaintext Comutation
+     int32_t sum = 0;
+     for (size_t i = 0; i < vec1.size(); ++i)
+     {
+          sum += vec1[i] * vec2[i];
+     }
 
-    // Encode and encrypt the vectors
-    seal::Plaintext plain_vec1, plain_vec2;
-    encoder.encode(vec1, plain_vec1);
-    encoder.encode(vec2, plain_vec2);
-    seal::Ciphertext encrypted_vec1, encrypted_vec2;
-    encryptor.encrypt(plain_vec1, encrypted_vec1);
-    encryptor.encrypt(plain_vec2, encrypted_vec2);
+     // Resize vectors to match the batch size
+     // Essentially, we pad them with zeros
+     size_t slot_count = encoder.slot_count();
+     std::cout << "slot_count = " << slot_count << std::endl;
+     // vec1.resize(slot_count, 0);
+     // vec2.resize(slot_count, 0);
+     // utils::print_vec(vec1, vec1.size(), "vec1");
+     int32_t len = vec1.size();
+     std::cout << "vec1.size = " << vec1.size() << std::endl;
+     std::cout << "vec2.size = " << vec2.size() << std::endl;
 
-    // Multiply the encrypted vectors
-    seal::Ciphertext encrypted_product;
-    evaluator.multiply(encrypted_vec1, encrypted_vec2, encrypted_product);
-    evaluator.relinearize_inplace(encrypted_product, relin_keys);
+     // Encode and encrypt the vectors
+     seal::Plaintext plain_vec1, plain_vec2;
+     encoder.encode(vec1, plain_vec1);
+     encoder.encode(vec2, plain_vec2);
+     seal::Ciphertext encrypted_vec1, encrypted_vec2;
+     encryptor.encrypt(plain_vec1, encrypted_vec1);
+     encryptor.encrypt(plain_vec2, encrypted_vec2);
 
-    // Decrypt and decode the multiplication
-    seal::Plaintext plain_product;
-    decryptor.decrypt(encrypted_product, plain_product);
-    vector<int64_t> decoded_product;
-    encoder.decode(plain_product, decoded_product);
-    utils::print_vec(decoded_product, 3, "decoded_product");
+     // Multiply the encrypted vectors
+     seal::Ciphertext encrypted_product;
+     evaluator.multiply(encrypted_vec1, encrypted_vec2, encrypted_product);
+     evaluator.relinearize_inplace(encrypted_product, relin_keys);
 
-    // Rotation rows
-    // seal::Ciphertext encrypted_rotated;
-    // evaluator.rotate_rows(encrypted_product, 1, gal_keys, encrypted_rotated);
-    // // evaluator.add_inplace(sum_cipher, rotated);
-    // seal::Plaintext plain_rotated;
-    // decryptor.decrypt(encrypted_rotated, plain_rotated);
-    // vector<int64_t> decoded_rotated;
-    // encoder.decode(plain_rotated, decoded_rotated);
-    // utils::print_vec(decoded_rotated, decoded_rotated.size(), "decoded_rotated");
+     // Decrypt and decode the multiplication
+     seal::Plaintext plain_product;
+     decryptor.decrypt(encrypted_product, plain_product);
+     vector<int64_t> decoded_product;
+     encoder.decode(plain_product, decoded_product);
+     utils::print_vec(decoded_product, len, "decoded_product");
 
-    // rotate vector
-    seal::Ciphertext vec_rotation;
-    evaluator.rotate_vector(encrypted_product, 1, gal_keys, vec_rotation);
-    seal::Plaintext vec_plain_rotated;
-    decryptor.decrypt(vec_rotation, vec_plain_rotated);
-    vector<int64_t> vec_decoded_rotated;
-    encoder.decode(vec_plain_rotated, vec_decoded_rotated);
-    utils::print_vec(vec_decoded_rotated, vec_decoded_rotated.size(), "decoded_rotated");
+     // Sum the elements of the resulting vector using encrypted rotation
+     seal::Ciphertext sum_cipher = encrypted_product;
+     for (auto i = -1; i > -len; i -= 1)
+     {
+          std::cout << "i = " << i << std::endl;
+          Ciphertext rotated;
+          evaluator.rotate_rows(encrypted_product, i, gal_keys, rotated);
+          seal::Plaintext plain_rotated;
+          decryptor.decrypt(rotated, plain_rotated);
+          vector<int64_t> decoded_rotated;
+          encoder.decode(plain_rotated, decoded_rotated);
+          utils::print_vec(decoded_rotated, len, "decoded_rotated");
+          evaluator.add_inplace(sum_cipher, rotated);
+     }
 
-    // Sum the elements of the resulting vector
-    // seal::Ciphertext sum_cipher = encrypted_product;
-    // for (auto i = slot_count / 2; i >= 1; i >>= 1)
-    // {
+     // Decrypt and decode the result
+     seal::Plaintext plain_sum;
+     decryptor.decrypt(sum_cipher, plain_sum);
+     vector<int64_t> decoded_sum;
+     encoder.decode(plain_sum, decoded_sum);
+     utils::print_vec(decoded_sum, len, "decoded_sum");
 
-    //     Ciphertext rotated;
-    //     evaluator.rotate_rows(sum_cipher, 1, gal_keys, rotated);
-    //     evaluator.add_inplace(sum_cipher, rotated);
-    // }
+     // Output the sum of the product of the vectors
+     cout << "Plain sum of the product of the vectors = " << sum << endl;
+     cout << "Decrypted sum of the product of the vectors: " << decoded_sum[len - 1] << endl;
 
-    // // Decrypt and decode the result
-    // seal::Plaintext plain_sum;
-    // decryptor.decrypt(sum_cipher, plain_sum);
-    // vector<int64_t> decoded_sum;
-    // encoder.decode(plain_sum, decoded_sum);
-
-    // // Output the sum of the product of the vectors
-    // cout << "Plain sum of the product of the vectors = 1*4 + 2*5 + 3*6 = 32" << endl;
-    // cout << "Encrypted sum of the product of the vectors: " << decoded_sum[0] << endl;
-
-    return 0;
+     return 0;
 }
 
 void example_rotation_bfv()
 {
-    // Source: https://github.com/microsoft/SEAL/blob/4.0.0/native/examples/6_rotation.cpp
-    utils::print_example_banner("Example: Rotation / Rotation in BFV");
+     // Source: https://github.com/microsoft/SEAL/blob/4.0.0/native/examples/6_rotation.cpp
+     utils::print_example_banner("Example: Rotation / Rotation in BFV");
 
-    EncryptionParameters parms(scheme_type::bfv);
+     EncryptionParameters parms(scheme_type::bfv);
 
-    size_t poly_modulus_degree = 8192;
-    parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-    parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, 20));
+     size_t poly_modulus_degree = 8192;
+     parms.set_poly_modulus_degree(poly_modulus_degree);
+     parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
+     parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, 20));
 
-    SEALContext context(parms);
-    sealhelper::print_parameters(context);
-    cout << endl;
+     SEALContext context(parms);
+     sealhelper::print_parameters(context);
+     cout << endl;
 
-    KeyGenerator keygen(context);
-    SecretKey secret_key = keygen.secret_key();
-    PublicKey public_key;
-    keygen.create_public_key(public_key);
-    RelinKeys relin_keys;
-    keygen.create_relin_keys(relin_keys);
-    Encryptor encryptor(context, public_key);
-    Evaluator evaluator(context);
-    Decryptor decryptor(context, secret_key);
+     KeyGenerator keygen(context);
+     SecretKey secret_key = keygen.secret_key();
+     PublicKey public_key;
+     keygen.create_public_key(public_key);
+     RelinKeys relin_keys;
+     keygen.create_relin_keys(relin_keys);
+     Encryptor encryptor(context, public_key);
+     Evaluator evaluator(context);
+     Decryptor decryptor(context, secret_key);
 
-    BatchEncoder batch_encoder(context);
-    size_t slot_count = batch_encoder.slot_count();
-    size_t row_size = slot_count / 2;
-    cout << "Plaintext matrix row size: " << row_size << endl;
+     BatchEncoder batch_encoder(context);
+     size_t slot_count = batch_encoder.slot_count();
+     size_t row_size = slot_count / 2;
+     cout << "Plaintext matrix row size: " << row_size << endl;
 
-    vector<uint64_t> pod_matrix(slot_count, 0ULL);
-    pod_matrix[0] = 0ULL;
-    pod_matrix[1] = 1ULL;
-    pod_matrix[2] = 2ULL;
-    pod_matrix[3] = 3ULL;
-    pod_matrix[row_size] = 4ULL;
-    pod_matrix[row_size + 1] = 5ULL;
-    pod_matrix[row_size + 2] = 6ULL;
-    pod_matrix[row_size + 3] = 7ULL;
+     vector<uint64_t> pod_matrix(slot_count, 0ULL);
+     pod_matrix[0] = 0ULL;
+     pod_matrix[1] = 1ULL;
+     pod_matrix[2] = 2ULL;
+     pod_matrix[3] = 3ULL;
+     pod_matrix[row_size] = 4ULL;
+     pod_matrix[row_size + 1] = 5ULL;
+     pod_matrix[row_size + 2] = 6ULL;
+     pod_matrix[row_size + 3] = 7ULL;
 
-    cout << "Input plaintext matrix:" << endl;
-    utils::print_matrix(pod_matrix, row_size);
+     cout << "Input plaintext matrix:" << endl;
+     utils::print_matrix(pod_matrix, row_size);
 
-    /*
-    First we use BatchEncoder to encode the matrix into a plaintext. We encrypt
-    the plaintext as usual.
-    */
-    Plaintext plain_matrix;
-    utils::print_line(__LINE__);
-    cout << "Encode and encrypt." << endl;
-    batch_encoder.encode(pod_matrix, plain_matrix);
-    Ciphertext encrypted_matrix;
-    encryptor.encrypt(plain_matrix, encrypted_matrix);
-    cout << "    + Noise budget in fresh encryption: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
-         << endl;
-    cout << endl;
+     /*
+     First we use BatchEncoder to encode the matrix into a plaintext. We encrypt
+     the plaintext as usual.
+     */
+     Plaintext plain_matrix;
+     utils::print_line(__LINE__);
+     cout << "Encode and encrypt." << endl;
+     batch_encoder.encode(pod_matrix, plain_matrix);
+     Ciphertext encrypted_matrix;
+     encryptor.encrypt(plain_matrix, encrypted_matrix);
+     cout << "    + Noise budget in fresh encryption: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
+          << endl;
+     cout << endl;
 
-    /*
-    Rotations require yet another type of special key called `Galois keys'. These
-    are easily obtained from the KeyGenerator.
-    */
-    GaloisKeys galois_keys;
-    keygen.create_galois_keys(galois_keys);
+     /*
+     Rotations require yet another type of special key called `Galois keys'. These
+     are easily obtained from the KeyGenerator.
+     */
+     GaloisKeys galois_keys;
+     keygen.create_galois_keys(galois_keys);
 
-    /*
-    Now rotate both matrix rows 3 steps to the left, decrypt, decode, and print.
-    */
-    utils::print_line(__LINE__);
-    cout << "Rotate rows 3 steps left." << endl;
-    evaluator.rotate_rows_inplace(encrypted_matrix, 3, galois_keys);
-    Plaintext plain_result;
-    cout << "    + Noise budget after rotation: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
-         << endl;
-    cout << "    + Decrypt and decode ...... Correct." << endl;
-    decryptor.decrypt(encrypted_matrix, plain_result);
-    batch_encoder.decode(plain_result, pod_matrix);
-    utils::print_matrix(pod_matrix, row_size);
+     /*
+     Now rotate both matrix rows 3 steps to the left, decrypt, decode, and print.
+     */
+     utils::print_line(__LINE__);
+     cout << "Rotate rows 3 steps left." << endl;
+     evaluator.rotate_rows_inplace(encrypted_matrix, 3, galois_keys);
+     Plaintext plain_result;
+     cout << "    + Noise budget after rotation: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
+          << endl;
+     cout << "    + Decrypt and decode ...... Correct." << endl;
+     decryptor.decrypt(encrypted_matrix, plain_result);
+     batch_encoder.decode(plain_result, pod_matrix);
+     utils::print_matrix(pod_matrix, row_size);
 
-    /*
-    We can also rotate the columns, i.e., swap the rows.
-    */
-    utils::print_line(__LINE__);
-    cout << "Rotate columns." << endl;
-    evaluator.rotate_columns_inplace(encrypted_matrix, galois_keys);
-    cout << "    + Noise budget after rotation: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
-         << endl;
-    cout << "    + Decrypt and decode ...... Correct." << endl;
-    decryptor.decrypt(encrypted_matrix, plain_result);
-    batch_encoder.decode(plain_result, pod_matrix);
-    utils::print_matrix(pod_matrix, row_size);
+     /*
+     We can also rotate the columns, i.e., swap the rows.
+     */
+     utils::print_line(__LINE__);
+     cout << "Rotate columns." << endl;
+     evaluator.rotate_columns_inplace(encrypted_matrix, galois_keys);
+     cout << "    + Noise budget after rotation: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
+          << endl;
+     cout << "    + Decrypt and decode ...... Correct." << endl;
+     decryptor.decrypt(encrypted_matrix, plain_result);
+     batch_encoder.decode(plain_result, pod_matrix);
+     utils::print_matrix(pod_matrix, row_size);
 
-    /*
-    Finally, we rotate the rows 4 steps to the right, decrypt, decode, and print.
-    */
-    utils::print_line(__LINE__);
-    cout << "Rotate rows 4 steps right." << endl;
-    evaluator.rotate_rows_inplace(encrypted_matrix, -4, galois_keys);
-    cout << "    + Noise budget after rotation: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
-         << endl;
-    cout << "    + Decrypt and decode ...... Correct." << endl;
-    decryptor.decrypt(encrypted_matrix, plain_result);
-    batch_encoder.decode(plain_result, pod_matrix);
-    utils::print_matrix(pod_matrix, row_size);
+     /*
+     Finally, we rotate the rows 4 steps to the right, decrypt, decode, and print.
+     */
+     utils::print_line(__LINE__);
+     cout << "Rotate rows 4 steps right." << endl;
+     evaluator.rotate_rows_inplace(encrypted_matrix, -4, galois_keys);
+     cout << "    + Noise budget after rotation: " << decryptor.invariant_noise_budget(encrypted_matrix) << " bits"
+          << endl;
+     cout << "    + Decrypt and decode ...... Correct." << endl;
+     decryptor.decrypt(encrypted_matrix, plain_result);
+     batch_encoder.decode(plain_result, pod_matrix);
+     utils::print_matrix(pod_matrix, row_size);
 
-    /*
-    Note that rotations do not consume any noise budget. However, this is only
-    the case when the special prime is at least as large as the other primes. The
-    same holds for relinearization. Microsoft SEAL does not require that the
-    special prime is of any particular size, so ensuring this is the case is left
-    for the user to do.
-    */
+     /*
+     Note that rotations do not consume any noise budget. However, this is only
+     the case when the special prime is at least as large as the other primes. The
+     same holds for relinearization. Microsoft SEAL does not require that the
+     special prime is of any particular size, so ensuring this is the case is left
+     for the user to do.
+     */
 }
 
 int main()
 {
-    // --- Plaintext examples ---
-    // - MNIST -
-    // pktnn_examples::fc_int_bp_simple(); // simple training with dummy data using backpropagation
-    // pktnn_examples::fc_int_dfa_mnist();  // training on MNIST using direct feedback alignment (a 3-layer network with pocket-tanh activation)
-    // pktnn_examples::fc_int_dfa_mnist_inference();  // inference on MNIST using model trained with direct feedback alignment
-    // pktnn_examples::fc_int_dfa_mnist_one_layer(); // training on MNIST using direct feedback alignment (only 1 layer)
-    // pktnn_examples::fc_int_dfa_mnist_one_layer_inference(); // inference on MNIST using model trained with direct feedback alignment (only 1 layer)
+     // --- Plaintext examples ---
+     // - MNIST -
+     // pktnn_examples::fc_int_bp_simple(); // simple training with dummy data using backpropagation
+     // pktnn_examples::fc_int_dfa_mnist();  // training on MNIST using direct feedback alignment (a 3-layer network with pocket-tanh activation)
+     // pktnn_examples::fc_int_dfa_mnist_inference();  // inference on MNIST using model trained with direct feedback alignment
+     // pktnn_examples::fc_int_dfa_mnist_one_layer(); // training on MNIST using direct feedback alignment (only 1 layer)
+     // pktnn_examples::fc_int_dfa_mnist_one_layer_inference(); // inference on MNIST using model trained with direct feedback alignment (only 1 layer)
 
-    // - ECG data -
-    // pktnn_examples::fc_int_dfa_ecg_one_layer(); // training on MIT-BIH using direct feedback alignment for the 1-layer nn
-    // pktnn_examples::fc_int_dfa_ecg_one_layer_inference(); // inference on MIT-BIH for the 1-layer nn
+     // - ECG data -
+     // pktnn_examples::fc_int_dfa_ecg_one_layer(); // training on MIT-BIH using direct feedback alignment for the 1-layer nn
+     // pktnn_examples::fc_int_dfa_ecg_one_layer_inference(); // inference on MIT-BIH for the 1-layer nn
 
-    // - SpO2 (hypnogram) data -
-    // pktnn_examples::fc_int_dfa_spo2_one_layer(); // training on hypnogram data using direct feedback alignment for the 1-layer nn
-    // pktnn_examples::fc_int_dfa_spo2_square(); // training on SpO2 data with a network with 2 linear layers and a square activation function
+     // - SpO2 (hypnogram) data -
+     // pktnn_examples::fc_int_dfa_spo2_one_layer(); // training on hypnogram data using direct feedback alignment for the 1-layer nn
+     // pktnn_examples::fc_int_dfa_spo2_square(); // training on SpO2 data with a network with 2 linear layers and a square activation function
 
-    // --- HHE examples ---
-    // hhe_pktnn_examples::hhe_pktnn_mnist_inference();  // (incomplete) encrypted inference protocol on MNIST for the 1-layer nn
-    // hhe_pktnn_examples::hhe_pktnn_mnist_square_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc + square activation nn
-    // hhe_pktnn_examples::hhe_pktnn_spo2_inference(); // encrypted inference protocol on SpO2 data for the 1-layer nn
+     // --- HHE examples ---
+     // hhe_pktnn_examples::hhe_pktnn_mnist_inference();  // (incomplete) encrypted inference protocol on MNIST for the 1-layer nn
+     // hhe_pktnn_examples::hhe_pktnn_mnist_square_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc + square activation nn
+     // hhe_pktnn_examples::hhe_pktnn_spo2_inference(); // encrypted inference protocol on SpO2 data for the 1-layer nn
 
-    // hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
-    // hhe_pktnn_examples::hhe_pktnn_1fc_inference("SpO2"); // encrypted inference protocol on SpO2 / ECG / MNIST data for the 1-layer nn
-    // hhe_pktnn_examples::hhe_pktnn_2fc_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc layer nn with square activation
+     // hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
+     // hhe_pktnn_examples::hhe_pktnn_1fc_inference("SpO2"); // encrypted inference protocol on SpO2 / ECG / MNIST data for the 1-layer nn
+     // hhe_pktnn_examples::hhe_pktnn_2fc_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc layer nn with square activation
 
-    // --- Unit tests ---
+     // --- Unit tests ---
 
-    // --- Experimentals ---
-    encrypted_sum();
-    // example_rotation_bfv();
-    return 0;
+     // --- Experimentals ---
+     encrypted_sum();
+     // example_rotation_bfv();
+     return 0;
 }
