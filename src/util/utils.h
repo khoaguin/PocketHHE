@@ -88,4 +88,12 @@ namespace utils
         }
         std::cout << std::endl;
     }
+
+    inline int64_t int_sigmoid(int64_t x)
+    {
+        if (x <= 0)
+            return 0;
+        else
+            return 1;
+    }
 }

@@ -8,8 +8,10 @@
 using namespace std;
 using namespace seal;
 
-int encrypted_sum()
+int encrypted_sum_test()
 {
+     utils::print_example_banner("Example: Encrypted Vector Sum in BFV");
+
      // Set up SEAL with batching enabled
      seal::EncryptionParameters parms(seal::scheme_type::bfv);
      // size_t poly_modulus_degree = config::mod_degree;
@@ -37,8 +39,8 @@ int encrypted_sum()
      seal::BatchEncoder encoder(context);
 
      // Example vectors
-     vector<int64_t> vec1 = {1, -2, 3, 4, 5, 6};
-     vector<int64_t> vec2 = {4, 5, 6, 7, 8, -9};
+     vector<int64_t> vec1 = {-1, 0, 3, 4, 5, 6, -3, -1};
+     vector<int64_t> vec2 = {4, 5, 6, 7, 8, 9, 3, 4};
 
      // Plaintext Comutation
      int32_t sum = 0;
@@ -54,7 +56,7 @@ int encrypted_sum()
      // vec1.resize(slot_count, 0);
      // vec2.resize(slot_count, 0);
      // utils::print_vec(vec1, vec1.size(), "vec1");
-     int32_t len = vec1.size();
+     int32_t len = (int32_t)vec1.size();
      std::cout << "vec1.size = " << vec1.size() << std::endl;
      std::cout << "vec2.size = " << vec2.size() << std::endl;
 
@@ -69,7 +71,9 @@ int encrypted_sum()
      // Multiply the encrypted vectors
      seal::Ciphertext encrypted_product;
      evaluator.multiply(encrypted_vec1, encrypted_vec2, encrypted_product);
+     std::cout << "encrypted_product size before Relinearization = " << encrypted_product.size() << std::endl;
      evaluator.relinearize_inplace(encrypted_product, relin_keys);
+     std::cout << "encrypted_product size after Relinearization = " << encrypted_product.size() << std::endl;
 
      // Decrypt and decode the multiplication
      seal::Plaintext plain_product;
@@ -79,19 +83,8 @@ int encrypted_sum()
      utils::print_vec(decoded_product, len, "decoded_product");
 
      // Sum the elements of the resulting vector using encrypted rotation
-     seal::Ciphertext sum_cipher = encrypted_product;
-     for (auto i = -1; i > -len; i -= 1)
-     {
-          std::cout << "i = " << i << std::endl;
-          Ciphertext rotated;
-          evaluator.rotate_rows(encrypted_product, i, gal_keys, rotated);
-          seal::Plaintext plain_rotated;
-          decryptor.decrypt(rotated, plain_rotated);
-          vector<int64_t> decoded_rotated;
-          encoder.decode(plain_rotated, decoded_rotated);
-          utils::print_vec(decoded_rotated, len, "decoded_rotated");
-          evaluator.add_inplace(sum_cipher, rotated);
-     }
+     seal::Ciphertext sum_cipher;
+     sealhelper::encrypted_vec_sum(encrypted_product, sum_cipher, evaluator, gal_keys, len);
 
      // Decrypt and decode the result
      seal::Plaintext plain_sum;
@@ -245,13 +238,13 @@ int main()
      // hhe_pktnn_examples::hhe_pktnn_spo2_inference(); // encrypted inference protocol on SpO2 data for the 1-layer nn
 
      // hhe_pktnn_examples::hhe_pktnn_ecg_inference(); // encrypted inference protocol on ECG for the 1-layer nn
-     // hhe_pktnn_examples::hhe_pktnn_1fc_inference("SpO2"); // encrypted inference protocol on SpO2 / ECG / MNIST data for the 1-layer nn
+     hhe_pktnn_examples::hhe_pktnn_1fc_inference("SpO2"); // encrypted inference protocol on SpO2 / ECG / MNIST data for the 1-layer nn
      // hhe_pktnn_examples::hhe_pktnn_2fc_inference(); // encrypted inference protocol on MNIST / FMNIST data for the 2fc layer nn with square activation
 
      // --- Unit tests ---
 
      // --- Experimentals ---
-     encrypted_sum();
+     // encrypted_sum_test();
      // example_rotation_bfv();
      return 0;
 }

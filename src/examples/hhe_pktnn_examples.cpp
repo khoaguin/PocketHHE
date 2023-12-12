@@ -819,25 +819,24 @@ namespace hhe_pktnn_examples
 
     int hhe_pktnn_1fc_inference(const std::string &dataset)
     {
-        std::cout << "--- HHE Inference with a 1-FC Neural Network on Encrypted "
-                  << dataset << " data ---"
-                  << std::endl;
+        utils::print_example_banner("HHE Inference with a 1-FC Neural Network");
+        std::cout << "Dataset: " << dataset << std::endl;
 
         // check if the lowercase of the `dataset` string is either "spo2" or "mnist"
         std::string lowerStr = dataset;
         std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
-        if (lowerStr != "spo2" && lowerStr != "mnist")
+        if (lowerStr != "spo2" && lowerStr != "ecg")
         {
-            throw std::runtime_error("Dataset must be either SpO2 or MNIST");
+            throw std::runtime_error("Dataset must be either SpO2 or ECG");
         }
         int inputLen = 0;
         if (lowerStr == "spo2")
         {
             inputLen = 300;
         }
-        if (lowerStr == "mnist")
+        if (lowerStr == "ecg")
         {
-            inputLen = 784;
+            inputLen = 128;
         }
 
         // the actors in the protocol
@@ -878,7 +877,8 @@ namespace hhe_pktnn_examples
         seal::BatchEncoder analyst_he_benc(*context);
         bool use_bsgs = false;
         std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
-        keygen.create_galois_keys(gk_indices, analyst.he_gk); // the HE Galois keys for batch computation
+        // keygen.create_galois_keys(gk_indices, analyst.he_gk); // the HE Galois keys for batch computation
+        keygen.create_galois_keys(analyst.he_gk); // the HE Galois keys for batch computation
         seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
         seal::Evaluator analyst_he_eval(*context);
         seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
@@ -937,16 +937,26 @@ namespace hhe_pktnn_examples
         // matrix::print_matrix(data);
         matrix::print_matrix_shape(data);
         matrix::print_matrix_stats(data);
+        std::cout << "Client loads his labels data from " << config::dataset_output_path << std::endl;
+        matrix::matrix labels = matrix::read_from_csv(config::dataset_output_path);
+        // matrix::print_matrix(labels);
+        matrix::print_matrix_shape(labels);
+        matrix::print_matrix_stats(labels);
 
         utils::print_line(__LINE__);
-        std::cout << "(Check) Computing in plain on only 1 input vectors" << std::endl;
+        std::cout << "(Check) Computing in plain on 1 input vector" << std::endl;
         matrix::vector vo_p(1);
-        matrix::vector vi = data[1];
+        size_t data_index = 5;
+        matrix::vector vi = data[data_index];
+        int64_t gt_out = labels[data_index][0];
         std::cout << "input vector vi.size() = " << vi.size() << ";\n";
         utils::print_vec(vi, vi.size(), "vi");
         matrix::matMulNoModulus(vo_p, weights_t, vi);
         std::cout << "plain output vector vo.size() = " << vo_p.size() << ";\n";
         utils::print_vec(vo_p, vo_p.size(), "vo_p");
+        int64_t plain_pred = utils::int_sigmoid(vo_p[0]);
+        std::cout << "plain prediction = " << plain_pred << " | ";
+        std::cout << "groundtruth label = " << gt_out << ";\n";
 
         utils::print_line(__LINE__);
         std::cout << "Client symmetrically encrypts input" << std::endl;
@@ -960,7 +970,7 @@ namespace hhe_pktnn_examples
         utils::print_vec(vi_dec, vi_dec.size(), "vi_dec");
 
         utils::print_line(__LINE__);
-        std::cout << "Client encrypts the symmetric key using HE -> HHE key" << std::endl;
+        std::cout << "Client encrypts the symmetric key using HE (the HHE key)" << std::endl;
         std::vector<seal::Ciphertext> client_hhe_key = pastahelper::encrypt_symmetric_key(
             client_sym_key, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
 
@@ -1003,6 +1013,9 @@ namespace hhe_pktnn_examples
         std::vector<int> csp_gk_indices = pastahelper::add_some_gk_indices(gk_indices, flatten_gks);
         seal::GaloisKeys csp_gk;
         keygen.create_galois_keys(csp_gk_indices, csp_gk);
+        seal::RelinKeys csp_rk;
+        keygen.create_relin_keys(csp_rk);
+
         time_start = std::chrono::high_resolution_clock::now();
         if (rem != 0)
         {
@@ -1032,39 +1045,62 @@ namespace hhe_pktnn_examples
 
         utils::print_line(__LINE__);
         std::cout << "CSP evaluates the HE weights on the decomposed HE data" << std::endl;
-        seal::Ciphertext enc_result;
+        seal::Ciphertext encrypted_product;
         sealhelper::packed_enc_multiply(vi_he_processed, enc_weights_t[0],
-                                        enc_result, analyst_he_eval);
-        // TODO: Do encrypted sum here
-        seal::Ciphertext enc_result_2;
+                                        encrypted_product, analyst_he_eval);
 
-        std::cout << "\n---------------------- Analyst ----------------------"
-                  << "\n";
+        std::cout << "encrypted_product size before relinearization = " << encrypted_product.size() << std::endl;
+        analyst_he_eval.relinearize_inplace(encrypted_product, csp_rk);
+        std::cout << "encrypted_product size after relinearization = " << encrypted_product.size() << std::endl;
         utils::print_line(__LINE__);
-        std::cout << "The analyst decrypts the HE encrypted results received from the CSP" << std::endl;
-        std::vector<int64_t> decrypted_result = sealhelper::decrypting(enc_result,
+        std::cout << "(Check) Decrypt the encrypted product to check" << std::endl;
+        std::vector<int64_t> decrypted_product = sealhelper::decrypting(encrypted_product,
+                                                                        analyst.he_sk,
+                                                                        analyst_he_benc,
+                                                                        *context,
+                                                                        inputLen);
+        utils::print_vec(decrypted_product, decrypted_product.size(), "decrypted_product");
+
+        // Do encrypted sum on the resulting product vector
+        utils::print_line(__LINE__);
+        std::cout << "CSP does encrypted sum on the encrypted vector" << std::endl;
+        seal::Ciphertext encrypted_sum_vec;
+        sealhelper::encrypted_vec_sum(
+            encrypted_product, encrypted_sum_vec, analyst_he_eval, analyst.he_gk, inputLen);
+
+        std::cout
+            << "\n---------------------- Analyst ----------------------"
+            << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "Analyst decrypts the HE encrypted results received from the CSP" << std::endl;
+        std::vector<int64_t> decrypted_result = sealhelper::decrypting(encrypted_sum_vec,
                                                                        analyst.he_sk,
                                                                        analyst_he_benc,
                                                                        *context,
                                                                        inputLen);
-        utils::print_vec(decrypted_result, decrypted_result.size(), "decrypted_result");
-
-        // sum
+        utils::print_vec(decrypted_result, decrypted_result.size(), "decrypted sum vector");
         matrix::vector vo(1);
-        for (auto n : decrypted_result)
-        {
-            vo[0] += n;
-        }
-        // final sigmoid
-        utils::print_vec(vo, vo.size(), "vo");
+        vo[0] = decrypted_result[inputLen - 1];
+
+        std::cout << "Plaintext FC layer output: " << vo_p[0] << std::endl;
+        std::cout << "Decrypted HHE FC layer output: " << vo[0] << std::endl;
 
         if (vo != vo_p)
         {
             utils::print_line(__LINE__);
-            std::cout << "\n!!!HHE Protocol Failed!!!\n";
-            utils::print_vec(vo_p, vo_p.size(), "plain result");
-            utils::print_vec(vo, vo.size(), "hhe result");
+            std::cout << "!!!HHE Protocol Failed!!!\n";
+            utils::print_vec(vo_p, vo_p.size(), "Plaintext result");
+            utils::print_vec(vo, vo.size(), "HHE result");
+            throw std::runtime_error("FC layer's plaintext results and HHE results are different");
         }
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst applies the sigmoid to get final prediction" << std::endl;
+        int64_t hhe_pred = utils::int_sigmoid(vo[0]);
+        std::cout << "HHE prediction = " << hhe_pred << " | ";
+        std::cout << "plain prediction = " << plain_pred << " | ";
+        std::cout << "ground-truth prediction = " << gt_out << std::endl;
+
         std::cout << "\n---------------------- Done ----------------------"
                   << "\n";
         return 0;

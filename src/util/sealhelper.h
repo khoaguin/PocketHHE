@@ -112,14 +112,10 @@ namespace sealhelper
     /*
     Calculate the encrypted sum of the encrypted ciphertext
     */
-    void encrypted_sum(const seal::Ciphertext &encrypted,
-                       seal::Ciphertext &destination,
-                       const seal::Evaluator &evaluator,
-                       const seal::BatchEncoder &encoder,
-                       const seal::Encryptor &encryptor,
-                       seal::Decryptor &decryptor,
-                       const seal::RelinKeys &relin_key,
-                       const seal::GaloisKeys &gal_keys,
-                       const size_t slot_count);
+    void encrypted_vec_sum(const seal::Ciphertext &,
+                           seal::Ciphertext &destination,
+                           const seal::Evaluator &evaluator,
+                           const seal::GaloisKeys &gal_keys,
+                           const size_t vec_size);
 
 } // end of sealhelper namespace
