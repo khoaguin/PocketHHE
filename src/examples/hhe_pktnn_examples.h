@@ -80,7 +80,6 @@ namespace hhe_pktnn_examples
         Experimental: Probably will be removed
     */
     int hhe_pktnn_mnist_inference();
-    int hhe_pktnn_spo2_inference(); // encrypted inference protocol on SpO2 data for the 1-layer nn
 
     /*
         Work in Progress
