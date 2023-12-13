@@ -77,11 +77,6 @@ namespace hhe_pktnn_examples
     int hhe_pktnn_ecg_inference();
 
     /*
-        Experimental: Probably will be removed
-    */
-    int hhe_pktnn_mnist_inference();
-
-    /*
         Work in Progress
     */
     int hhe_pktnn_1fc_inference(const std::string &dataset); // encrypted inference protocol on SpO2 / MNIST data for the 1-layer nn
