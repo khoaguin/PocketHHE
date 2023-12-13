@@ -55,7 +55,6 @@ namespace hhe_pktnn_examples
 
     struct CSP
     {
-        // things received from the analyst / data scientist
         seal::PublicKey *he_pk;
         seal::RelinKeys *he_rk;
         seal::GaloisKeys *he_gk;

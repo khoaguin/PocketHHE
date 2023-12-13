@@ -360,9 +360,6 @@ namespace hhe_pktnn_examples
         std::chrono::high_resolution_clock::time_point client_start_0, client_end_0;
         std::chrono::high_resolution_clock::time_point csp_start_0, csp_end_0;
         std::chrono::milliseconds analyst_time_0, analyst_time_1, client_time_0, csp_time_0;
-        // util function to print vectors
-        auto print = [](const int &n)
-        { std::cout << n << ' '; };
 
         // ---------------------- Analyst ----------------------
         std::cout << "\n";
@@ -618,6 +615,49 @@ namespace hhe_pktnn_examples
     {
         utils::print_example_banner("HHE Inference with a 2-FC Neural Network & Square Activation function");
         std::cout << "Dataset: " << dataset << std::endl;
+
+        // check if the lowercase of the `dataset` string is either "spo2" or "mnist"
+        std::string lowerStr = dataset;
+        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+        if (lowerStr != "mnist" && lowerStr != "fmnist")
+        {
+            throw std::runtime_error("Dataset must be either MNIST or FMNIST");
+        }
+        int inputLen = 784;
+
+        // the actors in the protocol
+        Analyst analyst;
+        Client client;
+        CSP csp;
+
+        // ---------------------- Analyst ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Analyst ----------------------"
+                  << "\n";
+
+        std::cout << "Analyst constructs the HE context"
+                  << "\n";
+        std::shared_ptr<seal::SEALContext> context = sealhelper::get_seal_context(
+            config::plain_mod, config::mod_degree, config::seclevel);
+        sealhelper::print_parameters(*context);
+        utils::print_line(__LINE__);
+        std::cout << "Analyst creates the HE keys, batch encoder, encryptor and evaluator from the context"
+                  << "\n";
+        seal::KeyGenerator keygen(*context);
+        analyst.he_sk = keygen.secret_key();     // HE secret key for decryption
+        keygen.create_public_key(analyst.he_pk); // HE public key for encryption
+        keygen.create_relin_keys(analyst.he_rk); // HE relinearization key to reduce noise in ciphertexts
+        seal::BatchEncoder analyst_he_benc(*context);
+        bool use_bsgs = false;
+        std::vector<int> gk_indices = pastahelper::add_gk_indices(use_bsgs, analyst_he_benc);
+        keygen.create_galois_keys(analyst.he_gk); // the HE Galois keys for batch computation
+        seal::Encryptor analyst_he_enc(*context, analyst.he_pk);
+        seal::Evaluator analyst_he_eval(*context);
+        seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
+        size_t slot_count = analyst_he_benc.slot_count();
+        std::cout << "Batch encoder slot count = " << slot_count << std::endl;
+
         return 0;
     }
 
