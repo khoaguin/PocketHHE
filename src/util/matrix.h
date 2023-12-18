@@ -169,8 +169,8 @@ namespace matrix
 
         double avg = (count > 0) ? (sum / count) : 0;
 
-        std::cout << "Maximum Value: " << maxVal << std::endl;
-        std::cout << "Minimum Value: " << minVal << std::endl;
+        std::cout << "Maximum Value: " << maxVal << " | ";
+        std::cout << "Minimum Value: " << minVal << " | ";
         std::cout << "Average Value: " << avg << std::endl;
     }
 

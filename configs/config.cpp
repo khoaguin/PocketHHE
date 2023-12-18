@@ -46,17 +46,22 @@ namespace config
     // int
 
     // === Paths to the dataset ===
-    std::string dataset_input_path = "data/SpO2/SpO2_input_cleaned4%.csv";
-    std::string dataset_output_path = "data/SpO2/SpO2_output_cleaned4%.csv";
-    // === Paths to save and load weights ===
-    // --- weights for the ECG dataset ---
+
+    // === Paths to the dataset and weights ===
+    // --- 1FC Model on ECG Data ---
     // std::string save_weight_path = "weights/ecg/ecg_512/fc1_weight_50epochs_bz4.csv";
     // std::string save_bias_path = "weights/ecg/ecg_512/fc1_bias_50epochs_bs4.csv";
-    // --- weights for the SpO2 dataset ---
-    std::string save_weight_path = "weights/SpO2/qat/quant_fc_5bits_data_2bits_weights.csv";
+    // --- 1FC Model on SpO2 Data ---
+    // std::string dataset_input_path = "data/SpO2/SpO2_input_cleaned4%.csv";
+    // std::string dataset_output_path = "data/SpO2/SpO2_output_cleaned4%.csv";
+    // std::string save_weight_path = "weights/SpO2/qat/quant_fc_5bits_data_2bits_weights.csv";
+    // std::string save_bias_path = "";
+    // --- 2FC Model on MNIST ---
+    std::string dataset_input_path = "data/SpO2/SpO2_input_cleaned4%.csv";
+    std::string dataset_output_path = "data/SpO2/SpO2_output_cleaned4%.csv";
+    std::string save_weight_path = "weights/mnist/qat/quant_2fc_2bits_mnist_plain_2bits_weights";
     std::string save_bias_path = "";
-    // --- weights for the MNIST dataset ---
-    // --- weights for the FMNIST dataset ---
+    // --- 2FC Model on FMNIST ---
 
     // === Parameters to run experiments ===
     // uint64_t NUM_RUN = 50;

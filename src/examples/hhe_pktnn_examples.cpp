@@ -613,10 +613,9 @@ namespace hhe_pktnn_examples
 
     int hhe_pktnn_2fc_inference(const std::string &dataset)
     {
-        utils::print_example_banner("HHE Inference with a 2-FC Neural Network & Square Activation function");
+        utils::print_example_banner("HHE Inference with a 2-FC Neural Network & Square Activation Function");
         std::cout << "Dataset: " << dataset << std::endl;
 
-        // check if the lowercase of the `dataset` string is either "spo2" or "mnist"
         std::string lowerStr = dataset;
         std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
         if (lowerStr != "mnist" && lowerStr != "fmnist")
@@ -657,6 +656,35 @@ namespace hhe_pktnn_examples
         seal::Decryptor analyst_he_dec(*context, analyst.he_sk);
         size_t slot_count = analyst_he_benc.slot_count();
         std::cout << "Batch encoder slot count = " << slot_count << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Analyst loads the pretrained weights"
+                  << "\n";
+        matrix::matrix fc1;
+        matrix::matrix fc2;
+        std::string fc1_path;
+        std::string fc2_path;
+        if (config::debugging)
+        {
+            fc1_path = "../" + config::save_weight_path + "_fc1.csv";
+            fc2_path = "../" + config::save_weight_path + "_fc2.csv";
+        }
+        else
+        {
+            fc1_path = config::save_weight_path + "_fc1.csv";
+            fc2_path = config::save_weight_path + "_fc2.csv";
+        }
+        std::cout << "Reading fc1 from " << fc1_path << std::endl;
+        fc1 = matrix::read_from_csv(fc1_path);
+        matrix::print_matrix_shape(fc1);
+        matrix::print_matrix_stats(fc1);
+
+        std::cout << "Reading fc2 from " << fc2_path << std::endl;
+        fc2 = matrix::read_from_csv(fc2_path);
+        matrix::print_matrix_shape(fc2);
+        matrix::print_matrix_stats(fc2);
+
+        std::cout << "Ignoring Bias" << std::endl;
 
         return 0;
     }
