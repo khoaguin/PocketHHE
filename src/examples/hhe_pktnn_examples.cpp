@@ -456,7 +456,7 @@ namespace hhe_pktnn_examples
         int64_t gt_out = labels[data_index][0];
         std::cout << "input vector vi.size() = " << vi.size() << ";\n";
         utils::print_vec(vi, vi.size(), "vi");
-        matrix::matMulNoModulus(vo_p, weights_t, vi);
+        matrix::matMulVecNoModulus(vo_p, weights_t, vi);
         std::cout << "plain output vector vo.size() = " << vo_p.size() << ";\n";
         utils::print_vec(vo_p, vo_p.size(), "vo_p");
         int64_t plain_pred = utils::int_sigmoid(vo_p[0]);
@@ -676,15 +676,65 @@ namespace hhe_pktnn_examples
         }
         std::cout << "Reading fc1 from " << fc1_path << std::endl;
         fc1 = matrix::read_from_csv(fc1_path);
-        matrix::print_matrix_shape(fc1);
-        matrix::print_matrix_stats(fc1);
+        matrix::matrix fc1_t = matrix::transpose(fc1);
+        matrix::print_matrix_shape(fc1_t, "fc1_t");
+        matrix::print_matrix_stats(fc1_t);
 
         std::cout << "Reading fc2 from " << fc2_path << std::endl;
         fc2 = matrix::read_from_csv(fc2_path);
-        matrix::print_matrix_shape(fc2);
-        matrix::print_matrix_stats(fc2);
+        matrix::matrix fc2_t = matrix::transpose(fc2);
+        matrix::print_matrix_shape(fc2_t, "fc2_t");
+        matrix::print_matrix_stats(fc2_t);
 
         std::cout << "Ignoring Bias" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "TODO: Analyst encrypts fc1 using HE" << std::endl;
+
+        std::cout << "TODO: Analyst encrypts fc2 using HE" << std::endl;
+
+        // ---------------------- Client (Data Owner) ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "---------------------- Client (Data Owner) ----------------------"
+                  << std::endl;
+        utils::print_line(__LINE__);
+        std::cout << "Client loads his input data from " << config::dataset_input_path << std::endl;
+        matrix::matrix data = matrix::read_from_csv(config::dataset_input_path);
+        // matrix::print_matrix(data);
+        matrix::print_matrix_shape(data);
+        matrix::print_matrix_stats(data);
+        std::cout << "Client loads his labels data from " << config::dataset_output_path << std::endl;
+        matrix::matrix labels = matrix::read_from_csv(config::dataset_output_path);
+        // matrix::print_matrix(labels);
+        matrix::print_matrix_shape(labels);
+        matrix::print_matrix_stats(labels);
+
+        utils::print_line(__LINE__);
+        std::cout << "(Check) Computing in plain on 1 input vector" << std::endl;
+        size_t data_index = 0;
+        matrix::vector vi = data[data_index];
+        int64_t gt_out = labels[data_index][0];
+        std::cout << "input vector vi.size() = " << vi.size() << ";\n";
+        std::cout << "-- 1st linear layer: ";
+        matrix::vector vo_p1;
+        matrix::matMulVecNoModulus(vo_p1, fc1_t, vi);
+        std::cout << "vo_p1.size() = " << vo_p1.size() << ";\n";
+        utils::print_vec(vo_p1, vo_p1.size(), "vo_p1", ", ");
+        std::cout << "-- square activation: ";
+        matrix::vector vo_p_square;
+        matrix::square(vo_p_square, vo_p1);
+        std::cout << "vo_p_square.size() = " << vo_p_square.size() << ";\n";
+        utils::print_vec(vo_p_square, vo_p_square.size(), "vo_p_square", ", ");
+        std::cout << "-- 2nd linear layer: ";
+        matrix::vector vo_p2;
+        matrix::matMulVecNoModulus(vo_p2, fc2_t, vo_p_square);
+        std::cout << "vo_p2.size() = " << vo_p2.size() << ";\n";
+        utils::print_vec(vo_p2, vo_p2.size(), "vo_p2");
+        int pred_plain = matrix::argmax(vo_p2);
+        std::cout << "-- plain prediction = " << pred_plain << " | "
+                  << "groundtruth label = " << gt_out << ";\n";
+        assert(pred_plain == gt_out);
 
         return 0;
     }

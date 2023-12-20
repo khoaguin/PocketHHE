@@ -57,8 +57,8 @@ namespace config
     // std::string save_weight_path = "weights/SpO2/qat/quant_fc_5bits_data_2bits_weights.csv";
     // std::string save_bias_path = "";
     // --- 2FC Model on MNIST ---
-    std::string dataset_input_path = "data/SpO2/SpO2_input_cleaned4%.csv";
-    std::string dataset_output_path = "data/SpO2/SpO2_output_cleaned4%.csv";
+    std::string dataset_input_path = "data/mnist/2bits_test_mnist_data.csv";
+    std::string dataset_output_path = "data/mnist/2bits_test_mnist_labels.csv";
     std::string save_weight_path = "weights/mnist/qat/quant_2fc_2bits_mnist_plain_2bits_weights";
     std::string save_bias_path = "";
     // --- 2FC Model on FMNIST ---

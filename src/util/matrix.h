@@ -4,6 +4,7 @@
 #include <limits>
 #include <variant>
 #include <vector>
+#include <algorithm>
 
 namespace matrix
 {
@@ -11,7 +12,7 @@ namespace matrix
     using matrix = std::vector<std::vector<int64_t>>;
     using uint128_t = __uint128_t;
 
-    // multiplication between a matrix and a vector (with modulus operation)
+    // vo = M * vi: multiplication between a matrix and a vector (with modulus operation)
     static void matMul(vector &vo, const matrix &M, const vector &vi,
                        size_t modulus)
     {
@@ -35,13 +36,16 @@ namespace matrix
         }
     }
 
-    // multiplication between a matrix and a vector (without modulus operation)
-    static void matMulNoModulus(vector &vo, const matrix &M, const vector &vi)
+    // vo = M * vi: multiplication between a matrix and a vector (without modulus operation)
+    static void matMulVecNoModulus(vector &vo, const matrix &M, const vector &vi)
     {
         size_t cols = vi.size();
         size_t rows = M.size();
+        size_t matrix_cols = M[0].size();
         if (vo.size() != rows)
             vo.resize(rows);
+
+        std::cout << "[" << rows << ", " << matrix_cols << "] * [" << cols << "]" << std::endl;
 
         for (size_t row = 0; row < rows; row++)
         {
@@ -73,7 +77,7 @@ namespace matrix
         vecAdd(vo, vo, b, modulus);
     }
 
-    // vo = M * vi + b
+    // vo = vi * vi
     static void square(vector &vo, const vector &vi, size_t modulus)
     {
         size_t rows = vi.size();
@@ -84,7 +88,18 @@ namespace matrix
             vo[row] = (((vi[row]) * vi[row]) % modulus);
     }
 
-    static void print_matrix_shape(const matrix &m)
+    // vo = vi * vi
+    static void square(vector &vo, const vector &vi)
+    {
+        size_t rows = vi.size();
+        if (vo.size() != rows)
+            vo.resize(rows);
+
+        for (size_t row = 0; row < vi.size(); row++)
+            vo[row] = (((vi[row]) * vi[row]));
+    }
+
+    static void print_matrix_shape(const matrix &m, std::string name = "")
     {
         if (m.empty() || m[0].empty())
         {
@@ -93,7 +108,7 @@ namespace matrix
         }
         size_t rows = m.size();
         size_t cols = m[0].size();
-        std::cout << "Shape = [" << rows << ", " << cols << "]" << std::endl;
+        std::cout << name << " shape = [" << rows << ", " << cols << "]" << std::endl;
     }
 
     static void print_matrix(const matrix &m)
@@ -195,6 +210,17 @@ namespace matrix
         }
 
         return m_t;
+    }
+
+    static int argmax(const vector &vi)
+    {
+        if (vi.empty())
+        {
+            return -1; // Return -1 or some other value to indicate the vector is empty
+        }
+
+        auto max_it = std::max_element(vi.begin(), vi.end());
+        return std::distance(vi.begin(), max_it);
     }
 
 } // namespace matrix
