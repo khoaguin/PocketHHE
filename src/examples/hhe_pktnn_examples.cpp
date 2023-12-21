@@ -734,7 +734,27 @@ namespace hhe_pktnn_examples
         int pred_plain = matrix::argmax(vo_p2);
         std::cout << "-- plain prediction = " << pred_plain << " | "
                   << "groundtruth label = " << gt_out << ";\n";
-        assert(pred_plain == gt_out);
+        !(pred_plain == gt_out) ? throw std::runtime_error("Assertion failed: plain prediction and ground truth are not the same")
+                                : std::cout << "Check pass: Correct prediction" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "Client symmetrically encrypts input" << std::endl;
+        std::vector<uint64_t> client_sym_key = pastahelper::get_symmetric_key();
+        pasta::PASTA SymmetricEncryptor(client_sym_key, config::plain_mod);
+        std::vector<uint64_t> vi_se = pastahelper::symmetric_encrypt_vec(SymmetricEncryptor, vi); // the symmetric encrypted images
+        std::cout << "vi_se.size() = " << vi_se.size() << std::endl;
+        utils::print_vec(vi_se, 10, "vi_se (first 10 values)");
+
+        utils::print_line(__LINE__);
+        std::cout << "(Check) Client decrypts symmetrically encrypted input" << std::endl;
+        std::vector<uint64_t> vi_dec = pastahelper::symmetric_decrypt_vec(SymmetricEncryptor, vi_se); // the symmetric encrypted images
+        // utils::print_vec(vi_dec, vi_dec.size(), "vi_dec");
+        utils::are_same_vectors(vi, vi_dec);
+
+        utils::print_line(__LINE__);
+        std::cout << "Client encrypts the symmetric key using HE (the HHE key)" << std::endl;
+        std::vector<seal::Ciphertext> client_hhe_key = pastahelper::encrypt_symmetric_key(
+            client_sym_key, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
 
         return 0;
     }
