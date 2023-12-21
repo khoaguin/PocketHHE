@@ -98,26 +98,4 @@ namespace utils
         else
             return 1;
     }
-
-    template <typename T>
-    inline void are_same_vectors(matrix::vector v1, std::vector<T> v2)
-    {
-        bool is_same = true;
-        for (size_t i = 0; i < v1.size(); i++)
-        {
-            if (v1[i] != v2[i])
-            {
-                is_same = false;
-                break;
-            }
-        }
-        if (!is_same)
-        {
-            throw std::runtime_error("Assertion failed: Vectors are not the same");
-        }
-        else
-        {
-            std::cout << "Check pass: Vectors are the same" << std::endl;
-        }
-    }
 }

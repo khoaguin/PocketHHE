@@ -632,7 +632,7 @@ namespace hhe_pktnn_examples
         // ---------------------- Analyst ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
-        std::cout << "---------------------- Analyst ----------------------"
+        std::cout << "---------------------- Analyst (Model Owner) ----------------------"
                   << "\n";
 
         std::cout << "Analyst constructs the HE context"
@@ -689,9 +689,40 @@ namespace hhe_pktnn_examples
         std::cout << "Ignoring Bias" << std::endl;
 
         utils::print_line(__LINE__);
-        std::cout << "TODO: Analyst encrypts fc1 using HE" << std::endl;
+        std::cout << "Analyst encrypts the fc1 using HE" << std::endl;
+        std::vector<seal::Ciphertext> he_fc1_t = sealhelper::encrypt_weight_mat(fc1_t,
+                                                                                analyst.he_pk,
+                                                                                analyst_he_benc,
+                                                                                analyst_he_enc);
+        std::cout << "he_fc1_t has " << he_fc1_t.size() << " HE ciphertexts" << std::endl;
 
-        std::cout << "TODO: Analyst encrypts fc2 using HE" << std::endl;
+        utils::print_line(__LINE__);
+        std::cout << "(Check) Analyst decrypts the HE encrypted fc1" << std::endl;
+        matrix::matrix dec_fc1_t = sealhelper::decrypt_weight_mat(he_fc1_t,
+                                                                  analyst_he_benc,
+                                                                  analyst_he_dec,
+                                                                  inputLen);
+        matrix::print_matrix_shape(dec_fc1_t, "Decrypted fc1_t");
+        // matrix::print_matrix(dec_fc1_1);
+        checks::are_same_matrices(fc1_t, dec_fc1_t, "fc1_t", "dec_fc1_t");
+
+        utils::print_line(__LINE__);
+        std::cout << "TODO: Analyst encrypts the fc2 using HE" << std::endl;
+        std::vector<std::vector<seal::Ciphertext>> he_fc2_t = sealhelper::encrypt_weight_mat_no_batch(fc2_t,
+                                                                                                      analyst.he_pk,
+                                                                                                      analyst_he_benc,
+                                                                                                      analyst_he_enc);
+        // std::cout << "he_fc1_t has " << he_fc1_t.size() << " HE ciphertexts" << std::endl;
+
+        // utils::print_line(__LINE__);
+        // std::cout << "(Check) Analyst decrypts the HE encrypted fc1" << std::endl;
+        // matrix::matrix dec_fc1_t = sealhelper::decrypt_weight_mat(he_fc1_t,
+        //                                                           analyst_he_benc,
+        //                                                           analyst_he_dec,
+        //                                                           inputLen);
+        // matrix::print_matrix_shape(dec_fc1_t, "Decrypted fc1_t");
+        // // matrix::print_matrix(dec_fc1_1);
+        // checks::are_same_matrices(fc1_t, dec_fc1_t, "fc1_t", "dec_fc1_t");
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
@@ -749,7 +780,7 @@ namespace hhe_pktnn_examples
         std::cout << "(Check) Client decrypts symmetrically encrypted input" << std::endl;
         std::vector<uint64_t> vi_dec = pastahelper::symmetric_decrypt_vec(SymmetricEncryptor, vi_se); // the symmetric encrypted images
         // utils::print_vec(vi_dec, vi_dec.size(), "vi_dec");
-        utils::are_same_vectors(vi, vi_dec);
+        checks::are_same_vectors(vi, vi_dec);
 
         utils::print_line(__LINE__);
         std::cout << "Client encrypts the symmetric key using HE (the HHE key)" << std::endl;

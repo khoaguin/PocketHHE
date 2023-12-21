@@ -141,6 +141,15 @@ namespace sealhelper
         return encrypted_weights;
     }
 
+    std::vector<std::vector<seal::Ciphertext>> encrypt_weight_mat_no_batch(const matrix::matrix &weight,
+                                                                           const seal::PublicKey &he_pk,
+                                                                           const seal::BatchEncoder &benc,
+                                                                           const seal::Encryptor &enc)
+    {
+        std::vector<std::vector<seal::Ciphertext>> encrypted_weights;
+        return encrypted_weights;
+    };
+
     matrix::matrix decrypt_weight_mat(const std::vector<seal::Ciphertext> &enc_weight,
                                       const seal::BatchEncoder &benc,
                                       seal::Decryptor &dec,

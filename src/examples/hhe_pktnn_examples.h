@@ -13,6 +13,7 @@
 #include "../util/pastahelper.h"
 #include "../util/utils.h"
 #include "../util/matrix.h"
+#include "../util/checks.h"
 #include "../pasta/pasta_3_plain.h"
 #include "../pasta/pasta_3_seal.h"
 #include "../../tests/ecg_tests.h"
