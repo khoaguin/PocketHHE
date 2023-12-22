@@ -629,6 +629,11 @@ namespace hhe_pktnn_examples
         Client client;
         CSP csp;
 
+        // Some time variables to calculate operations' runtimes
+        std::chrono::high_resolution_clock::time_point time_start;
+        std::chrono::high_resolution_clock::time_point time_end;
+        std::chrono::milliseconds time_diff;
+
         // ---------------------- Analyst ----------------------
         std::cout << "\n";
         utils::print_line(__LINE__);
@@ -712,17 +717,6 @@ namespace hhe_pktnn_examples
                                                                                                       analyst.he_pk,
                                                                                                       analyst_he_benc,
                                                                                                       analyst_he_enc);
-        // std::cout << "he_fc1_t has " << he_fc1_t.size() << " HE ciphertexts" << std::endl;
-
-        // utils::print_line(__LINE__);
-        // std::cout << "(Check) Analyst decrypts the HE encrypted fc1" << std::endl;
-        // matrix::matrix dec_fc1_t = sealhelper::decrypt_weight_mat(he_fc1_t,
-        //                                                           analyst_he_benc,
-        //                                                           analyst_he_dec,
-        //                                                           inputLen);
-        // matrix::print_matrix_shape(dec_fc1_t, "Decrypted fc1_t");
-        // // matrix::print_matrix(dec_fc1_1);
-        // checks::are_same_matrices(fc1_t, dec_fc1_t, "fc1_t", "dec_fc1_t");
 
         // ---------------------- Client (Data Owner) ----------------------
         std::cout << "\n";
@@ -786,6 +780,117 @@ namespace hhe_pktnn_examples
         std::cout << "Client encrypts the symmetric key using HE (the HHE key)" << std::endl;
         std::vector<seal::Ciphertext> client_hhe_key = pastahelper::encrypt_symmetric_key(
             client_sym_key, config::USE_BATCH, analyst_he_benc, analyst_he_enc);
+
+        // -------------------------- CSP ----------------------
+        std::cout << "\n";
+        utils::print_line(__LINE__);
+        std::cout << "-------------------------- CSP ----------------------" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP creates his own HE secret key\n";
+        seal::KeyGenerator csp_keygen(*context);
+        csp.he_sk = csp_keygen.secret_key();
+        checks::are_same_he_sk(csp.he_sk, analyst.he_sk);
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP does HHE decomposition to turn client's symmetric input into HE input...\n";
+        pasta::PASTA_SEAL HHE(context, analyst.he_pk, csp.he_sk, analyst.he_rk, analyst.he_gk);
+        time_start = std::chrono::high_resolution_clock::now();
+        std::vector<seal::Ciphertext> vi_he = HHE.decomposition(vi_se, client_hhe_key, config::USE_BATCH);
+        time_end = std::chrono::high_resolution_clock::now();
+        time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+            time_end - time_start);
+        std::cout << "Decomposition Time: " << time_diff.count() << " milliseconds"
+                  << " = " << time_diff.count() / 1000 << " seconds" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP does decomposition postprocessing on the HE encrypted input..." << std::endl;
+        size_t num_block = inputLen / HHE.get_plain_size();
+        size_t rem = inputLen % HHE.get_plain_size();
+        if (rem)
+            num_block++;
+        std::cout << "There are " << vi_he.size() << " decomposed HE ciphertexts. The reason is: " << std::endl;
+        std::cout << "- HHE cipher one block's plain size " << HHE.get_plain_size() << std::endl;
+        std::cout << "- (number_of_blocks, remaining) = " << inputLen << "/"
+                  << HHE.get_plain_size() << " = (" << num_block << ", " << rem << ")\n";
+
+        utils::print_line(__LINE__);
+        std::cout << "Preparing necessary things to do decomposition postprocessing "
+                  << "(new Galois key, masking, flattening) " << std::endl;
+        std::vector<int> flatten_gks;
+        for (int i = 1; i < num_block; i++)
+            flatten_gks.push_back(-(int)(i * HHE.get_plain_size()));
+        std::vector<int> csp_gk_indices = pastahelper::add_some_gk_indices(gk_indices, flatten_gks);
+        seal::GaloisKeys csp_gk;
+        keygen.create_galois_keys(csp_gk_indices, csp_gk);
+        seal::RelinKeys csp_rk;
+        keygen.create_relin_keys(csp_rk);
+
+        time_start = std::chrono::high_resolution_clock::now();
+        if (rem != 0)
+        {
+            std::vector<uint64_t> mask(rem, 1);
+            HHE.mask(vi_he.back(), mask);
+        }
+        seal::Ciphertext vi_he_processed;
+        HHE.flatten(vi_he, vi_he_processed, csp_gk);
+        time_end = std::chrono::high_resolution_clock::now();
+        time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+            time_end - time_start);
+        std::cout << "Time: " << time_diff.count() << " milliseconds"
+                  << " = " << time_diff.count() / 1000 << " seconds" << std::endl;
+
+        utils::print_line(__LINE__);
+        std::cout << "(Check) Decrypts processed, decomposed HE input vector using Analyst's HE secret key\n";
+        std::vector<int64_t> vi_he_processed_decrypted = sealhelper::decrypting(vi_he_processed,
+                                                                                analyst.he_sk,
+                                                                                analyst_he_benc,
+                                                                                *context,
+                                                                                inputLen);
+        utils::print_vec(vi_he_processed_decrypted, 10, "vi_he_decrypted_processed (first 10 values)");
+        checks::are_same_vectors(vi, vi_he_processed_decrypted);
+
+        utils::print_line(__LINE__);
+        std::cout << "CSP evaluates the HE fc1 on the decomposed HE data..." << std::endl;
+        std::vector<seal::Ciphertext> vo_he1;
+        for (const seal::Ciphertext &he_fc1_row : he_fc1_t)
+        {
+            seal::Ciphertext encrypted_elem_product;
+            sealhelper::packed_enc_multiply(vi_he_processed, he_fc1_row,
+                                            encrypted_elem_product, analyst_he_eval);
+            // std::cout << "vo_he1 size before relinearization = " << vo_he1.size() << std::endl;
+            // relinearizes ciphertext and reduce its size to 2
+            analyst_he_eval.relinearize_inplace(encrypted_elem_product, csp_rk);
+            // std::cout << "vo_he1 size after relinearization = " << vo_he1.size() << std::endl;
+            // utils::print_line(__LINE__);
+            // std::cout << "(Check) Decrypt the vo_he1 to check" << std::endl;
+            // std::vector<int64_t> decrypted_elem_product = sealhelper::decrypting(encrypted_elem_product,
+            //                                                                 analyst.he_sk,
+            //                                                                 analyst_he_benc,
+            //                                                                 *context,
+            //                                                                 inputLen);
+            // utils::print_vec(encrypted_elem_product, encrypted_elem_product.size(), "decrypted_product");
+
+            // Do encrypted sum on the resulting product vector
+            utils::print_line(__LINE__);
+            std::cout << "CSP does encrypted sum on the encrypted vector" << std::endl;
+            seal::Ciphertext encrypted_sum_vec;
+            sealhelper::encrypted_vec_sum(encrypted_elem_product, encrypted_sum_vec,
+                                          analyst_he_eval, analyst.he_gk, inputLen);
+            vo_he1.push_back(encrypted_sum_vec);
+        }
+
+        std::cout << "(Check) Decrypt the vo_he1 to check" << std::endl;
+
+        std::vector<int64_t> vo_he_decrypted1;
+        for (const seal::Ciphertext &i : vo_he1)
+        {
+            auto dec = sealhelper::decrypting(i, analyst.he_sk,
+                                              analyst_he_benc, *context, inputLen);
+            std::cout << dec[0] << " ";
+        }
+
+        // utils::print_vec(vo_he_decrypted1, vo_he_decrypted1.size(), "vo_he_decrypted1");
 
         return 0;
     }
