@@ -771,7 +771,7 @@ namespace hhe_pktnn_examples
         utils::print_vec(vi_se, 10, "vi_se (first 10 values)");
 
         utils::print_line(__LINE__);
-        std::cout << "(Check) Client decrypts symmetrically encrypted input" << std::endl;
+        std::cout << "(Check) Client decrypts the symmetrically encrypted input" << std::endl;
         std::vector<uint64_t> vi_dec = pastahelper::symmetric_decrypt_vec(SymmetricEncryptor, vi_se); // the symmetric encrypted images
         // utils::print_vec(vi_dec, vi_dec.size(), "vi_dec");
         checks::are_same_vectors(vi, vi_dec);
@@ -841,7 +841,8 @@ namespace hhe_pktnn_examples
                   << " = " << time_diff.count() / 1000 << " seconds" << std::endl;
 
         utils::print_line(__LINE__);
-        std::cout << "(Check) Decrypts processed, decomposed HE input vector using Analyst's HE secret key\n";
+        std::cout << "(Check) Decrypts the processed, decomposed HE input vector using "
+                  << "Analyst's HE secret key and compare with the plaintext input vector\n";
         std::vector<int64_t> vi_he_processed_decrypted = sealhelper::decrypting(vi_he_processed,
                                                                                 analyst.he_sk,
                                                                                 analyst_he_benc,
@@ -853,43 +854,57 @@ namespace hhe_pktnn_examples
         utils::print_line(__LINE__);
         std::cout << "CSP evaluates the HE fc1 on the decomposed HE data..." << std::endl;
         std::vector<seal::Ciphertext> vo_he1;
+        size_t i = 0;
         for (const seal::Ciphertext &he_fc1_row : he_fc1_t)
         {
             seal::Ciphertext encrypted_elem_product;
+            utils::print_line(__LINE__);
+            std::cout << "Doing encrypted element-wise vector multiplication:" << std::endl;
             sealhelper::packed_enc_multiply(vi_he_processed, he_fc1_row,
                                             encrypted_elem_product, analyst_he_eval);
-            // std::cout << "vo_he1 size before relinearization = " << vo_he1.size() << std::endl;
-            // relinearizes ciphertext and reduce its size to 2
+            // relinearizes ciphertext and reduce its ciphertext size to 2 (from 3)
             analyst_he_eval.relinearize_inplace(encrypted_elem_product, csp_rk);
-            // std::cout << "vo_he1 size after relinearization = " << vo_he1.size() << std::endl;
-            // utils::print_line(__LINE__);
-            // std::cout << "(Check) Decrypt the vo_he1 to check" << std::endl;
-            // std::vector<int64_t> decrypted_elem_product = sealhelper::decrypting(encrypted_elem_product,
-            //                                                                 analyst.he_sk,
-            //                                                                 analyst_he_benc,
-            //                                                                 *context,
-            //                                                                 inputLen);
-            // utils::print_vec(encrypted_elem_product, encrypted_elem_product.size(), "decrypted_product");
-
-            // Do encrypted sum on the resulting product vector
+            // std::cout << encrypted_elem_product.size() << std::endl;
+            // utils::print_vec(decrypted_elem_product, decrypted_elem_product.size(), "decrypted_elem_product");
+            // Do encrypted sum on the resulting element-wise product vector
             utils::print_line(__LINE__);
             std::cout << "CSP does encrypted sum on the encrypted vector" << std::endl;
             seal::Ciphertext encrypted_sum_vec;
             sealhelper::encrypted_vec_sum(encrypted_elem_product, encrypted_sum_vec,
                                           analyst_he_eval, analyst.he_gk, inputLen);
+            std::cout << "(Check) Decrypt the encrypted sum vector to check. "
+                      << "The sum is the last element of the decrypted vector" << std::endl;
+            std::vector<int64_t> decrypted_sum_vec = sealhelper::decrypting(encrypted_sum_vec,
+                                                                            analyst.he_sk,
+                                                                            analyst_he_benc,
+                                                                            *context,
+                                                                            inputLen);
+            // utils::print_vec(decrypted_sum_vec, decrypted_sum_vec.size(), "decrypted_sum_vec");
+            int16_t decrypted_sum = decrypted_sum_vec[decrypted_sum_vec.size() - 1];
+            std::cout << "The decrypted sum is " << decrypted_sum_vec[decrypted_sum_vec.size() - 1] << std::endl;
+            if (vo_p1[i] != decrypted_sum)
+            {
+                throw std::runtime_error("Encrypted and plaintext results are different!");
+            }
+            i += 1;
+
             vo_he1.push_back(encrypted_sum_vec);
+            // break;
         }
+        std::cout << "TODO: CSP does the encrypted square activation on output of "
+                  << "the encrypted fc1 layer on the HE data" << std::endl;
 
-        std::cout << "(Check) Decrypt the vo_he1 to check" << std::endl;
+        std::cout << "TODO: CSP evaluates the encrypted fc2 layer output of "
+                  << "the encrypted square activation layer" << std::endl;
 
-        std::vector<int64_t> vo_he_decrypted1;
-        for (const seal::Ciphertext &i : vo_he1)
-        {
-            auto dec = sealhelper::decrypting(i, analyst.he_sk,
-                                              analyst_he_benc, *context, inputLen);
-            std::cout << dec[0] << " ";
-        }
-
+        // std::cout << "(Check) Decrypt the vo_he1 to check" << std::endl;
+        // std::vector<int64_t> vo_he_decrypted1;
+        // for (const seal::Ciphertext &i : vo_he1)
+        // {
+        //     auto dec = sealhelper::decrypting(i, analyst.he_sk,
+        //                                       analyst_he_benc, *context, inputLen);
+        //     std::cout << dec[0] << " ";
+        // }
         // utils::print_vec(vo_he_decrypted1, vo_he_decrypted1.size(), "vo_he_decrypted1");
 
         return 0;
