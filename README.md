@@ -3,6 +3,8 @@
 An Integer-only, Lightweight Privacy-preserving Machine Learning Framework with Hybrid Homomorphic Encryption (HHE).
 Built with [SEAL](https://github.com/microsoft/SEAL), [PASTA](https://github.com/IAIK/hybrid-HE-framework) and [PocketNN](https://github.com/khoaguin/PocketNN).
 
+Source code for [GuardML: Efficient Privacy-Preserving Machine Learning Services Through Hybrid Homomorphic Encryption (SAC '24)](https://dl.acm.org/doi/abs/10.1145/3605098.3635983) and [A Pervasive, Efficient and Private Future: Realizing Privacy-Preserving Machine Learning Through Hybrid Homomorphic Encryption (DASC 2024)](https://arxiv.org/pdf/2409.06422)
+
 ## Datasets
 
 The image datasets used in this project are copied from their original website and are stored in `data/`
